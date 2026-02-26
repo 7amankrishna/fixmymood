@@ -2,6 +2,20 @@
 // 📦 DATA & CONFIG
 // ==========================================
 
+// ==========================================
+// 🤖 TALK TO BUDDY
+// ==========================================
+
+function goToChat() {
+  // Give immediate feedback so the user knows it's working
+  showToast('Connecting to your buddy... 🤖');
+  
+  // Add a slight delay so the toast animation plays before navigating
+  setTimeout(() => {
+    window.location.href = 'chat.html';
+  }, 600);
+}
+
 const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/JamesFT/Database-Quotes-JSON/master/quotes.json';
 const CACHE_KEY = 'fmm_quotes_cache';
 const CACHE_TIME_KEY = 'fmm_quotes_cache_time';
