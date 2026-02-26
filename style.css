@@ -52,6 +52,66 @@ body {
   animation: floatOrb 20s infinite ease-in-out;
 }
 
+/* ========== TALK TO BUDDY FAB ========== */
+.fab-wrapper {
+  position: fixed;
+  bottom: calc(var(--nav-height) + 20px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  pointer-events: none; /* Allows clicking through the empty space */
+  z-index: 40;
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 20px;
+}
+
+.chat-buddy-fab {
+  pointer-events: auto; /* Re-enables clicks specifically on the button */
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  color: white;
+  border: none;
+  border-radius: 30px;
+  padding: 14px 22px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(108, 92, 231, 0.4);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  animation: pulseBuddyGlow 3s infinite;
+}
+
+.chat-buddy-fab:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(108, 92, 231, 0.6);
+  animation: none; /* Pause pulse on hover */
+}
+
+.chat-buddy-fab:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.chat-buddy-fab .fab-icon {
+  font-size: 20px;
+  animation: floatIcon 3s infinite ease-in-out;
+}
+
+@keyframes pulseBuddyGlow {
+  0% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.4); }
+  70% { box-shadow: 0 0 0 15px rgba(168, 85, 247, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0); }
+}
+
+@keyframes floatIcon {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
 .bg-particles .orb:nth-child(1) {
   width: 300px; height: 300px;
   background: var(--accent-1);
