@@ -603,6 +603,61 @@
             40% { transform: scale(1); }
         }
 
+        /* Shimmer Skeleton Loading */
+        .shimmer-loading {
+            padding: 16px 18px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 16px;
+            border-bottom-left-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 200px;
+            max-width: 340px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .shimmer-line {
+            height: 12px;
+            border-radius: 6px;
+            background: linear-gradient(
+                90deg,
+                rgba(99, 102, 241, 0.06) 0%,
+                rgba(99, 102, 241, 0.15) 40%,
+                rgba(139, 92, 246, 0.2) 50%,
+                rgba(99, 102, 241, 0.15) 60%,
+                rgba(99, 102, 241, 0.06) 100%
+            );
+            background-size: 200% 100%;
+            animation: shimmer 1.5s ease-in-out infinite;
+        }
+
+        .shimmer-line:nth-child(1) { width: 92%; }
+        .shimmer-line:nth-child(2) { width: 60%; animation-delay: 0.15s; }
+        .shimmer-line:nth-child(3) { width: 78%; animation-delay: 0.3s; }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Streaming Cursor */
+        .streaming-cursor {
+            display: inline-block;
+            width: 7px;
+            height: 1.15em;
+            background: #a5b4fc;
+            border-radius: 1px;
+            margin-left: 3px;
+            vertical-align: text-bottom;
+            animation: cursorBlink 0.6s step-end infinite;
+        }
+
+        @keyframes cursorBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
         /* MathJax styling */
         .MathJax {
             outline: none;
@@ -803,6 +858,11 @@
                 padding: 10px 12px;
                 font-size: 0.85rem;
             }
+
+            .shimmer-loading {
+                min-width: 160px;
+                max-width: 280px;
+            }
         }
 
         /* Small phones */
@@ -905,6 +965,11 @@
                 width: 44px;
                 height: 44px;
                 border-radius: 11px;
+            }
+
+            .shimmer-loading {
+                min-width: 140px;
+                max-width: 240px;
             }
         }
 
@@ -1175,6 +1240,7 @@
         let currentChatId = null;
         let currentModel = 'llama-3.3-70b-versatile';
         let currentModelLabel = 'Llama 3.3 70B';
+        let isStreaming = false;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -1237,7 +1303,6 @@
 
         function renderChat() {
             const container = document.getElementById('chatContainer');
-            const welcome = document.getElementById('welcome');
 
             if (!currentChatId || !chats[currentChatId] || chats[currentChatId].messages.length === 0) {
                 container.innerHTML = '';
@@ -1300,11 +1365,11 @@
             count.textContent = Object.keys(chats).length;
         }
 
-        // Message Sending
+        // Message Sending with Streaming
         async function sendMessage() {
             const input = document.getElementById('userInput');
             const text = input.value.trim();
-            if (!text) return;
+            if (!text || isStreaming) return;
 
             // Create chat if none exists
             if (!currentChatId) createNewChat();
@@ -1327,31 +1392,70 @@
                 input.blur();
             }
 
-            // Show loading
-            const loadingId = 'loading-' + Date.now();
+            isStreaming = true;
+
+            // Show shimmer skeleton loading
+            const streamMsgId = 'stream-' + Date.now();
             const container = document.getElementById('chatContainer');
-            const loadingEl = document.createElement('div');
-            loadingEl.className = 'message bot';
-            loadingEl.id = loadingId;
-            loadingEl.innerHTML = `
+            const streamEl = document.createElement('div');
+            streamEl.className = 'message bot';
+            streamEl.id = streamMsgId;
+            streamEl.innerHTML = `
                 <div class="message-avatar">🤍</div>
                 <div class="message-content">
-                    <div class="loading"><span></span><span></span><span></span></div>
+                    <div class="shimmer-loading">
+                        <div class="shimmer-line"></div>
+                        <div class="shimmer-line"></div>
+                        <div class="shimmer-line"></div>
+                    </div>
                 </div>
             `;
-            container.appendChild(loadingEl);
+            container.appendChild(streamEl);
             requestAnimationFrame(() => {
                 container.scrollTop = container.scrollHeight;
             });
 
             try {
-                const response = await callAPI(text);
-                document.getElementById(loadingId)?.remove();
-                chats[currentChatId].messages.push({ role: 'assistant', content: response });
-                renderChat();
+                let rafId = null;
+                let latestText = '';
+
+                const fullResponse = await callStreamAPI(text, (partialText) => {
+                    latestText = partialText;
+
+                    // Throttle DOM updates with requestAnimationFrame
+                    if (!rafId) {
+                        rafId = requestAnimationFrame(() => {
+                            const el = document.getElementById(streamMsgId);
+                            if (el) {
+                                const contentEl = el.querySelector('.message-content');
+                                contentEl.innerHTML = `<div class="message-text" style="background:rgba(255,255,255,0.04);border-bottom-left-radius:4px;">${formatMessage(latestText)}<span class="streaming-cursor"></span></div>`;
+                                container.scrollTop = container.scrollHeight;
+                            }
+                            rafId = null;
+                        });
+                    }
+                });
+
+                // Cancel any pending rAF
+                if (rafId) cancelAnimationFrame(rafId);
+
+                // Final render without cursor
+                const el = document.getElementById(streamMsgId);
+                if (el) {
+                    const contentEl = el.querySelector('.message-content');
+                    contentEl.innerHTML = `<div class="message-text" style="background:rgba(255,255,255,0.04);border-bottom-left-radius:4px;">${formatMessage(fullResponse)}</div>`;
+                    container.scrollTop = container.scrollHeight;
+                }
+
+                chats[currentChatId].messages.push({ role: 'assistant', content: fullResponse });
                 saveChats();
+
+                // Render MathJax after stream completes
+                if (window.MathJax) {
+                    MathJax.typesetPromise().catch(() => {});
+                }
             } catch (error) {
-                document.getElementById(loadingId)?.remove();
+                document.getElementById(streamMsgId)?.remove();
                 chats[currentChatId].messages.push({
                     role: 'assistant',
                     content: `Oops! 🤕 Something went wrong: ${error.message}. Try again?`
@@ -1359,9 +1463,13 @@
                 renderChat();
                 saveChats();
             }
+
+            isStreaming = false;
         }
 
-        async function callAPI(text) {
+        async function callStreamAPI(text) {
+            const onChunk = arguments[1];
+
             const systemPrompt = `You are HealMate, a friendly, fun, and beginner-friendly therapy companion. 
             - Use simple, warm language like talking to a close friend
             - Add emojis naturally to keep it light and fun
@@ -1384,9 +1492,8 @@
                     ...chats[currentChatId].messages
                 ],
                 temperature: 0.9,
-                max_tokens: 4096,
                 top_p: 1,
-                stream: false
+                stream: true
             };
 
             const response = await fetch(API_URL, {
@@ -1399,12 +1506,63 @@
             });
 
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error?.message || 'API Error');
+                let errorMsg = 'API Error';
+                try {
+                    const error = await response.json();
+                    errorMsg = error.error?.message || errorMsg;
+                } catch(e) {}
+                throw new Error(errorMsg);
             }
 
-            const data = await response.json();
-            return data.choices[0].message.content;
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let fullText = '';
+            let buffer = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop(); // Keep incomplete line in buffer
+
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed || !trimmed.startsWith('data: ')) continue;
+
+                    const data = trimmed.slice(6);
+                    if (data === '[DONE]') continue;
+
+                    try {
+                        const parsed = JSON.parse(data);
+                        const delta = parsed.choices[0]?.delta?.content || '';
+                        if (delta) {
+                            fullText += delta;
+                            if (onChunk) onChunk(fullText);
+                        }
+                    } catch (e) {
+                        // Skip malformed JSON chunks
+                    }
+                }
+            }
+
+            // Process any remaining buffer
+            if (buffer.trim()) {
+                const trimmed = buffer.trim();
+                if (trimmed.startsWith('data: ') && trimmed.slice(6) !== '[DONE]') {
+                    try {
+                        const parsed = JSON.parse(trimmed.slice(6));
+                        const delta = parsed.choices[0]?.delta?.content || '';
+                        if (delta) {
+                            fullText += delta;
+                            if (onChunk) onChunk(fullText);
+                        }
+                    } catch(e) {}
+                }
+            }
+
+            return fullText;
         }
 
         // Model Selection
@@ -1572,12 +1730,10 @@
 
             const sidebar = document.getElementById('sidebar');
 
-            // Swipe right to open (from left edge)
-            if (deltaX > 80 && touchStartX < 40 && !sidebar.classList.contains('open')) {
+         if (deltaX > 80 && touchStartX < 40 && !sidebar.classList.contains('open')) {
                 toggleSidebar();
             }
 
-            // Swipe left to close
             if (deltaX < -80 && sidebar.classList.contains('open')) {
                 closeSidebar();
             }
@@ -1585,5 +1741,3 @@
     </script>
 </body>
 </html>
-
-
