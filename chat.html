@@ -1381,10 +1381,10 @@
                 model: currentModel,
                 messages: [
                     { role: 'system', content: systemPrompt },
-                    ...chats[currentChatId].messages.slice(-6)
+                    ...chats[currentChatId].messages
                 ],
                 temperature: 0.9,
-                max_tokens: 500,
+                max_tokens: 5000,
                 top_p: 1,
                 stream: false
             };
@@ -1585,3 +1585,4 @@
     </script>
 </body>
 </html>
+
