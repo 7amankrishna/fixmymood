@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MindWave — Brain Wave Music</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ========== RESET & VARIABLES ========== */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0f;--surface:#12121a;--card:#1a1a2e;
+  --text:#e0e0e0;--text-dim:#888;--radius:16px;
+  --accent:#6c5ce7;--glow:rgba(108,92,231,.3);
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;overflow-x:hidden;
+  padding-bottom:120px;
+}
+
+/* ========== ANIMATED BACKGROUND ========== */
+.bg-orb{
+  position:fixed;border-radius:50%;
+  filter:blur(80px);opacity:.15;
+  pointer-events:none;z-index:0;
+  transition:all 1.5s ease;
+}
+.bg-orb.o1{width:500px;height:500px;top:-100px;left:-100px;background:#6c5ce7}
+.bg-orb.o2{width:400px;height:400px;bottom:-50px;right:-50px;background:#00cec9}
+.bg-orb.o3{width:300px;height:300px;top:40%;left:50%;background:#fd79a8}
+
+/* ========== HEADER ========== */
+header{
+  position:relative;z-index:1;text-align:center;
+  padding:50px 20px 20px;
+}
+header h1{
+  font-size:clamp(2rem,5vw,3.5rem);font-weight:900;
+  background:linear-gradient(135deg,#6c5ce7,#a29bfe,#fd79a8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;letter-spacing:-1px;
+}
+header p{
+  color:var(--text-dim);font-size:1.05rem;
+  margin-top:8px;font-weight:300;
+}
+
+/* ========== HEADPHONE NOTICE ========== */
+.hp-notice{
+  position:relative;z-index:1;
+  max-width:500px;margin:20px auto;
+  background:rgba(108,92,231,.1);
+  border:1px solid rgba(108,92,231,.25);
+  border-radius:12px;padding:14px 20px;
+  text-align:center;font-size:.9rem;
+  color:#a29bfe;
+}
+.hp-notice span{font-size:1.3rem;margin-right:6px}
+
+/* ========== MOOD GRID ========== */
+.section-title{
+  position:relative;z-index:1;
+  text-align:center;font-size:1.2rem;
+  font-weight:600;margin:35px 0 18px;
+  color:var(--text-dim);
+}
+.mood-grid{
+  position:relative;z-index:1;
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:14px;max-width:800px;
+  margin:0 auto;padding:0 20px;
+}
+.mood-card{
+  background:var(--card);border-radius:var(--radius);
+  padding:24px 10px;text-align:center;
+  cursor:pointer;border:2px solid transparent;
+  transition:all .35s ease;position:relative;
+  overflow:hidden;
+}
+.mood-card::before{
+  content:'';position:absolute;inset:0;
+  opacity:0;transition:opacity .35s ease;
+  border-radius:inherit;
+}
+.mood-card:hover{transform:translateY(-4px)}
+.mood-card:hover::before{opacity:.08}
+.mood-card.active{
+  border-color:var(--active-color);
+  transform:translateY(-4px);
+  box-shadow:0 8px 30px var(--active-glow);
+}
+.mood-card.active::before{opacity:.12}
+.mood-emoji{font-size:2.2rem;display:block;margin-bottom:8px}
+.mood-name{font-weight:700;font-size:.95rem;margin-bottom:4px}
+.mood-wave{font-size:.7rem;color:var(--text-dim);font-weight:500}
+.mood-freq{font-size:.65rem;color:var(--text-dim);margin-top:2px}
+
+/* mood colors */
+.mood-card[data-mood="sleep"]{--active-color:#2d3436;--active-glow:rgba(45,52,54,.4)}
+.mood-card[data-mood="sleep"]::before{background:#2d3436}
+.mood-card[data-mood="relax"]{--active-color:#00b894;--active-glow:rgba(0,184,148,.3)}
+.mood-card[data-mood="relax"]::before{background:#00b894}
+.mood-card[data-mood="creative"]{--active-color:#a29bfe;--active-glow:rgba(162,155,254,.3)}
+.mood-card[data-mood="creative"]::before{background:#a29bfe}
+.mood-card[data-mood="focus"]{--active-color:#fdcb6e;--active-glow:rgba(253,203,110,.3)}
+.mood-card[data-mood="focus"]::before{background:#fdcb6e}
+.mood-card[data-mood="peak"]{--active-color:#e17055;--active-glow:rgba(225,112,85,.3)}
+.mood-card[data-mood="peak"]::before{background:#e17055}
+
+/* ========== TRACK SECTION ========== */
+.track-section{
+  position:relative;z-index:1;
+  max-width:800px;margin:0 auto;
+  padding:0 20px;
+}
+.track-header{
+  display:flex;align-items:center;
+  justify-content:space-between;
+  margin:30px 0 16px;
+}
+.track-header h2{
+  font-size:1.15rem;font-weight:700;
+}
+.track-header .mood-badge{
+  font-size:.75rem;padding:4px 12px;
+  border-radius:20px;font-weight:600;
+}
+.track-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(145px,1fr));
+  gap:12px;
+}
+.track-card{
+  background:var(--card);border-radius:14px;
+  padding:18px 14px;cursor:pointer;
+  border:2px solid transparent;
+  transition:all .3s ease;text-align:center;
+  position:relative;overflow:hidden;
+}
+.track-card:hover{
+  transform:translateY(-3px);
+  border-color:rgba(255,255,255,.1);
+}
+.track-card.active{
+  border-color:var(--track-active,#6c5ce7);
+  background:rgba(108,92,231,.1);
+}
+.track-icon{font-size:1.8rem;margin-bottom:8px;display:block}
+.track-name{font-size:.85rem;font-weight:600;margin-bottom:4px}
+.track-desc{font-size:.68rem;color:var(--text-dim);line-height:1.3}
+.track-hz{
+  font-size:.6rem;margin-top:6px;
+  color:var(--text-dim);font-weight:500;
+  background:rgba(255,255,255,.05);
+  display:inline-block;padding:2px 8px;
+  border-radius:8px;
+}
+
+/* hidden state */
+.track-section.hidden{display:none}
+
+/* ========== PLAYER BAR ========== */
+.player-bar{
+  position:fixed;bottom:0;left:0;right:0;
+  background:rgba(18,18,26,.95);
+  backdrop-filter:blur(20px);
+  border-top:1px solid rgba(255,255,255,.06);
+  padding:0;z-index:100;
+  transform:translateY(100%);
+  transition:transform .4s cubic-bezier(.4,0,.2,1);
+}
+.player-bar.visible{transform:translateY(0)}
+.player-content{
+  max-width:900px;margin:0 auto;
+  padding:12px 20px 14px;
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;gap:16px;
+}
+
+/* visualizer canvas */
+.viz-wrap{
+  width:100%;height:50px;
+  border-radius:10px;overflow:hidden;
+  background:rgba(255,255,255,.03);
+}
+.viz-wrap canvas{width:100%;height:100%;display:block}
+
+/* center controls */
+.player-center{display:flex;align-items:center;gap:12px}
+.btn-play{
+  width:48px;height:48px;border-radius:50%;
+  border:none;cursor:pointer;
+  background:linear-gradient(135deg,#6c5ce7,#a29bfe);
+  color:#fff;font-size:1.2rem;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s ease;flex-shrink:0;
+}
+.btn-play:hover{transform:scale(1.08);box-shadow:0 4px 20px rgba(108,92,231,.5)}
+.btn-play:active{transform:scale(.95)}
+.player-info{text-align:left;min-width:0}
+.player-track-name{
+  font-size:.85rem;font-weight:700;
+  white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;
+}
+.player-mood-name{font-size:.7rem;color:var(--text-dim)}
+
+/* right side */
+.player-right{
+  display:flex;align-items:center;
+  gap:14px;justify-self:end;
+}
+.vol-group{display:flex;align-items:center;gap:6px}
+.vol-icon{font-size:.9rem;cursor:pointer}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  height:4px;border-radius:4px;
+  background:rgba(255,255,255,.15);
+  outline:none;cursor:pointer;width:80px;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:14px;height:14px;border-radius:50%;
+  background:#6c5ce7;cursor:pointer;
+  border:2px solid #fff;
+}
+.timer-select{
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.1);
+  color:var(--text);font-size:.75rem;
+  padding:5px 8px;border-radius:8px;
+  cursor:pointer;font-family:inherit;
+}
+.timer-select option{background:#1a1a2e}
+.timer-display{
+  font-size:.7rem;color:var(--text-dim);
+  font-variant-numeric:tabular-nums;
+  min-width:45px;text-align:center;
+}
+
+/* ========== RESPONSIVE ========== */
+@media(max-width:700px){
+  .mood-grid{grid-template-columns:repeat(3,1fr)}
+  .track-grid{grid-template-columns:repeat(2,1fr)}
+  .player-content{
+    grid-template-columns:1fr;
+    grid-template-rows:auto auto;
+    gap:10px;
+  }
+  .viz-wrap{height:35px}
+  .player-right{justify-self:center}
+  .player-center{justify-content:center}
+}
+@media(max-width:420px){
+  .mood-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+  .mood-card{padding:16px 6px}
+  .mood-emoji{font-size:1.7rem}
+  .mood-name{font-size:.78rem}
+}
+
+/* ========== ANIMATIONS ========== */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.track-card{animation:fadeUp .4s ease both}
+.track-card:nth-child(2){animation-delay:.05s}
+.track-card:nth-child(3){animation-delay:.1s}
+.track-card:nth-child(4){animation-delay:.15s}
+.track-card:nth-child(5){animation-delay:.2s}
+
+@keyframes pulse{
+  0%,100%{opacity:.15}50%{opacity:.25}
+}
+.bg-orb{animation:pulse 6s ease-in-out infinite}
+.bg-orb.o2{animation-delay:2s}
+.bg-orb.o3{animation-delay:4s}
+</style>
+</head>
+<body>
+
+<!-- Background Orbs -->
+<div class="bg-orb o1"></div>
+<div class="bg-orb o2"></div>
+<div class="bg-orb o3"></div>
+
+<!-- Header -->
+<header>
+  <h1>🧠 MindWave</h1>
+  <p>Tune your brain with binaural beats &amp; ambient sounds</p>
+</header>
+
+<!-- Headphone Notice -->
+<div class="hp-notice">
+  <span>🎧</span> Use headphones for binaural beats to work properly
+</div>
+
+<!-- Mood Selection -->
+<div class="section-title">Choose Your State</div>
+<div class="mood-grid" id="moodGrid">
+  <div class="mood-card" data-mood="sleep">
+    <span class="mood-emoji">😴</span>
+    <div class="mood-name">Sleep</div>
+    <div class="mood-wave">Delta Waves</div>
+    <div class="mood-freq">0.5 – 4 Hz</div>
+  </div>
+  <div class="mood-card" data-mood="relax">
+    <span class="mood-emoji">🧘</span>
+    <div class="mood-name">Relax</div>
+    <div class="mood-wave">Alpha Waves</div>
+    <div class="mood-freq">8 – 12 Hz</div>
+  </div>
+  <div class="mood-card" data-mood="creative">
+    <span class="mood-emoji">🎨</span>
+    <div class="mood-name">Creative</div>
+    <div class="mood-wave">Theta Waves</div>
+    <div class="mood-freq">4 – 8 Hz</div>
+  </div>
+  <div class="mood-card" data-mood="focus">
+    <span class="mood-emoji">📚</span>
+    <div class="mood-name">Focus</div>
+    <div class="mood-wave">Beta Waves</div>
+    <div class="mood-freq">12 – 30 Hz</div>
+  </div>
+  <div class="mood-card" data-mood="peak">
+    <span class="mood-emoji">🚀</span>
+    <div class="mood-name">Peak</div>
+    <div class="mood-wave">Gamma Waves</div>
+    <div class="mood-freq">30+ Hz</div>
+  </div>
+</div>
+
+<!-- Track Section -->
+<div class="track-section hidden" id="trackSection">
+  <div class="track-header">
+    <h2 id="trackTitle">Tracks</h2>
+    <span class="mood-badge" id="moodBadge"></span>
+  </div>
+  <div class="track-grid" id="trackGrid"></div>
+</div>
+
+<!-- Player Bar -->
+<div class="player-bar" id="playerBar">
+  <div class="player-content">
+    <!-- Left: Visualizer -->
+    <div class="viz-wrap">
+      <canvas id="vizCanvas"></canvas>
+    </div>
+
+    <!-- Center: Controls -->
+    <div class="player-center">
+      <button class="btn-play" id="btnPlay">▶</button>
+      <div class="player-info">
+        <div class="player-track-name" id="playerTrackName">—</div>
+        <div class="player-mood-name" id="playerMoodName">—</div>
+      </div>
+    </div>
+
+    <!-- Right: Volume + Timer -->
+    <div class="player-right">
+      <div class="vol-group">
+        <span class="vol-icon" id="volIcon">🔊</span>
+        <input type="range" id="volSlider" min="0" max="100" value="60">
+      </div>
+      <select class="timer-select" id="timerSelect">
+        <option value="0">∞</option>
+        <option value="5">5 min</option>
+        <option value="15">15 min</option>
+        <option value="30" selected>30 min</option>
+        <option value="60">1 hr</option>
+      </select>
+      <div class="timer-display" id="timerDisplay">--:--</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   TRACK DATABASE
+   ============================================================ */
+const TRACKS = {
+  sleep: {
+    label: 'Sleep Mode', color: '#636e72', glow: 'rgba(99,110,114,.3)',
+    badge: 'background:#2d3436;color:#dfe6e9',
+    orbColors: ['#2d3436','#636e72','#2d3436'],
+    tracks: [
+      { id:'s1', name:'Deep Ocean',   icon:'🌊', desc:'Warm deep tones',      carrier:90,  beat:2,   noise:'brown', noiseLv:.06, filter:400, osc:'sine',  sub:45 },
+      { id:'s2', name:'Night Rain',   icon:'🌧️', desc:'Soft rainfall drift',  carrier:110, beat:1.5, noise:'pink',  noiseLv:.08, filter:600, osc:'sine',  sub:55 },
+      { id:'s3', name:'Cosmic Drift', icon:'🌌', desc:'Floating in space',    carrier:80,  beat:3,   noise:'brown', noiseLv:.05, filter:350, osc:'sine',  sub:40 },
+      { id:'s4', name:'Dreamless',    icon:'🌑', desc:'Pure stillness',       carrier:100, beat:1,   noise:'brown', noiseLv:.04, filter:300, osc:'sine',  sub:50 },
+      { id:'s5', name:'Midnight',     icon:'🦉', desc:'Silent night hum',     carrier:120, beat:2.5, noise:'pink',  noiseLv:.05, filter:500, osc:'sine',  sub:60 },
+    ]
+  },
+  relax: {
+    label: 'Relax Mode', color: '#00b894', glow: 'rgba(0,184,148,.25)',
+    badge: 'background:#00b894;color:#fff',
+    orbColors: ['#00b894','#00cec9','#55efc4'],
+    tracks: [
+      { id:'r1', name:'Zen Garden',    icon:'🎋', desc:'Peaceful clarity',     carrier:200, beat:10,   noise:'pink',  noiseLv:.04, filter:900,  osc:'sine',   sub:100 },
+      { id:'r2', name:'Morning Light', icon:'🌅', desc:'Gentle awakening',     carrier:180, beat:9,    noise:'white', noiseLv:.03, filter:700,  osc:'sine',   sub:90  },
+      { id:'r3', name:'Calm Waters',   icon:'💧', desc:'Flowing serenity',     carrier:220, beat:11,   noise:'pink',  noiseLv:.05, filter:800,  osc:'sine',   sub:110 },
+      { id:'r4', name:'Golden Hour',   icon:'✨', desc:'Warm relaxation',      carrier:190, beat:8.5,  noise:'brown', noiseLv:.04, filter:600,  osc:'sine',   sub:95  },
+      { id:'r5', name:'Soft Breeze',   icon:'🍃', desc:'Nature\'s lullaby',    carrier:210, beat:10.5, noise:'pink',  noiseLv:.04, filter:750,  osc:'sine',   sub:105 },
+    ]
+  },
+  creative: {
+    label: 'Creative Mode', color: '#a29bfe', glow: 'rgba(162,155,254,.25)',
+    badge: 'background:#6c5ce7;color:#fff',
+    orbColors: ['#6c5ce7','#a29bfe','#fd79a8'],
+    tracks: [
+      { id:'c1', name:'Dream Walker',  icon:'🦋', desc:'Vivid imagination',    carrier:160, beat:6,   noise:'pink',  noiseLv:.04, filter:700, osc:'triangle', sub:80  },
+      { id:'c2', name:'Inner Vision',  icon:'👁️', desc:'Deep intuition',       carrier:140, beat:5,   noise:'brown', noiseLv:.05, filter:550, osc:'sine',     sub:70  },
+      { id:'c3', name:'Imagination',   icon:'💭', desc:'Ideas flowing',        carrier:170, beat:7,   noise:'pink',  noiseLv:.04, filter:650, osc:'triangle', sub:85  },
+      { id:'c4', name:'Mind Canvas',   icon:'🖌️', desc:'Painting thoughts',   carrier:130, beat:4.5, noise:'brown', noiseLv:.05, filter:500, osc:'sine',     sub:65  },
+      { id:'c5', name:'The Muse',      icon:'🎭', desc:'Artistic spark',       carrier:150, beat:6.5, noise:'pink',  noiseLv:.04, filter:620, osc:'triangle', sub:75  },
+    ]
+  },
+  focus: {
+    label: 'Focus Mode', color: '#fdcb6e', glow: 'rgba(253,203,110,.25)',
+    badge: 'background:#f39c12;color:#fff',
+    orbColors: ['#fdcb6e','#f39c12','#e17055'],
+    tracks: [
+      { id:'f1', name:'Deep Work',    icon:'🔬', desc:'Intense concentration', carrier:300, beat:18, noise:'white', noiseLv:.02, filter:1200, osc:'sine',     sub:0 },
+      { id:'f2', name:'Study Zone',   icon:'📖', desc:'Absorb information',    carrier:250, beat:15, noise:'pink',  noiseLv:.03, filter:1000, osc:'sine',     sub:0 },
+      { id:'f3', name:'Code Flow',    icon:'💻', desc:'Logic & precision',     carrier:280, beat:20, noise:'white', noiseLv:.02, filter:1100, osc:'sine',     sub:0 },
+      { id:'f4', name:'Sharp Mind',   icon:'🎯', desc:'Razor-sharp focus',     carrier:320, beat:14, noise:'pink',  noiseLv:.02, filter:900,  osc:'triangle', sub:0 },
+      { id:'f5', name:'Laser Focus',  icon:'⚡', desc:'Unstoppable flow',      carrier:350, beat:22, noise:'white', noiseLv:.02, filter:1300, osc:'sine',     sub:0 },
+    ]
+  },
+  peak: {
+    label: 'Peak Mode', color: '#e17055', glow: 'rgba(225,112,85,.25)',
+    badge: 'background:#d63031;color:#fff',
+    orbColors: ['#e17055','#d63031','#fdcb6e'],
+    tracks: [
+      { id:'p1', name:'Transcendence', icon:'🧬', desc:'Maximum cognition',     carrier:400, beat:40, noise:'white', noiseLv:.015, filter:1500, osc:'sine', sub:0 },
+      { id:'p2', name:'Hyperdrive',    icon:'💫', desc:'Accelerated mind',      carrier:350, beat:35, noise:'white', noiseLv:.02,  filter:1400, osc:'sine', sub:0 },
+      { id:'p3', name:'Mind Surge',    icon:'🌟', desc:'Neural fireworks',      carrier:380, beat:45, noise:'pink',  noiseLv:.015, filter:1600, osc:'sine', sub:0 },
+      { id:'p4', name:'Limitless',     icon:'♾️', desc:'Unlock everything',     carrier:420, beat:38, noise:'white', noiseLv:.015, filter:1400, osc:'sine', sub:0 },
+      { id:'p5', name:'Quantum',       icon:'⚛️', desc:'Highest processing',   carrier:360, beat:42, noise:'pink',  noiseLv:.015, filter:1500, osc:'sine', sub:0 },
+    ]
+  }
+};
+
+/* ============================================================
+   AUDIO ENGINE  (Web Audio API — binaural beats + noise)
+   ============================================================ */
+class AudioEngine {
+  constructor(){
+    this.ctx = null;
+    this.nodes = [];
+    this.masterGain = null;
+    this.analyser = null;
+    this.playing = false;
+    this._fadeSec = .8;
+  }
+
+  _init(){
+    if(this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.analyser = this.ctx.createAnalyser();
+    this.analyser.fftSize = 256;
+    this.analyser.smoothingTimeConstant = .82;
+    this.masterGain = this.ctx.createGain();
+    this.masterGain.gain.value = 0;
+
+    /* simple delay‑based reverb */
+    this.delay = this.ctx.createDelay();
+    this.delay.delayTime.value = .25;
+    this.feedback = this.ctx.createGain();
+    this.feedback.gain.value = .25;
+    this.delayFilter = this.ctx.createBiquadFilter();
+    this.delayFilter.type = 'lowpass';
+    this.delayFilter.frequency.value = 1800;
+    this.delay.connect(this.delayFilter);
+    this.delayFilter.connect(this.feedback);
+    this.feedback.connect(this.delay);
+    this.delay.connect(this.masterGain);
+
+    this.masterGain.connect(this.analyser);
+    this.analyser.connect(this.ctx.destination);
+  }
+
+  /* ---- noise buffer ---- */
+  _makeNoise(type){
+    const sr = this.ctx.sampleRate;
+    const len = 2 * sr;
+    const buf = this.ctx.createBuffer(1, len, sr);
+    const d = buf.getChannelData(0);
+
+    for(let i=0;i<len;i++) d[i] = Math.random()*2-1;
+
+    if(type==='brown'){
+      let last=0;
+      for(let i=0;i<len;i++){
+        d[i] = (last + .02*d[i]) / 1.02;
+        last = d[i]; d[i]*=3.5;
+      }
+    } else if(type==='pink'){
+      let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+      for(let i=0;i<len;i++){
+        const w=d[i];
+        b0=.99886*b0+w*.0555179;b1=.99332*b1+w*.0750759;
+        b2=.96900*b2+w*.1538520;b3=.86650*b3+w*.3104856;
+        b4=.55000*b4+w*.5329522;b5=-.7616*b5-w*.0168980;
+        d[i]=(b0+b1+b2+b3+b4+b5+b6+w*.5362)*.11;
+        b6=w*.115926;
+      }
+    }
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf; src.loop = true; src.start();
+    return src;
+  }
+
+  /* ---- main play ---- */
+  play(track, volume){
+    this.stop();
+    this._init();
+    if(this.ctx.state==='suspended') this.ctx.resume();
+
+    const now = this.ctx.currentTime;
+    const n = []; // collect nodes for cleanup
+
+    /* --- binaural pair --- */
+    const oscL = this.ctx.createOscillator();
+    oscL.type = track.osc || 'sine';
+    oscL.frequency.value = track.carrier;
+    const panL = this.ctx.createStereoPanner();
+    panL.pan.value = -1;
+    const gL = this.ctx.createGain(); gL.gain.value = .25;
+    oscL.connect(gL).connect(panL).connect(this.masterGain);
+    oscL.connect(gL); gL.connect(this.delay);  // send to reverb
+    oscL.start();
+    n.push(oscL);
+
+    const oscR = this.ctx.createOscillator();
+    oscR.type = track.osc || 'sine';
+    oscR.frequency.value = track.carrier + track.beat;
+    const panR = this.ctx.createStereoPanner();
+    panR.pan.value = 1;
+    const gR = this.ctx.createGain(); gR.gain.value = .25;
+    oscR.connect(gR).connect(panR).connect(this.masterGain);
+    oscR.start();
+    n.push(oscR);
+
+    /* --- sub harmonic --- */
+    if(track.sub){
+      const sub = this.ctx.createOscillator();
+      sub.type = 'sine'; sub.frequency.value = track.sub;
+      const gs = this.ctx.createGain(); gs.gain.value = .08;
+      sub.connect(gs).connect(this.masterGain);
+      sub.start(); n.push(sub);
+    }
+
+    /* --- warm pad (detuned pair) --- */
+    const pad1 = this.ctx.createOscillator();
+    pad1.type = 'sine'; pad1.frequency.value = track.carrier * .5;
+    pad1.detune.value = 7;
+    const gp1 = this.ctx.createGain(); gp1.gain.value = .06;
+    pad1.connect(gp1).connect(this.masterGain);
+    gp1.connect(this.delay);
+    pad1.start(); n.push(pad1);
+
+    const pad2 = this.ctx.createOscillator();
+    pad2.type = 'sine'; pad2.frequency.value = track.carrier * .5;
+    pad2.detune.value = -7;
+    const gp2 = this.ctx.createGain(); gp2.gain.value = .06;
+    pad2.connect(gp2).connect(this.masterGain);
+    pad2.start(); n.push(pad2);
+
+    /* --- noise layer --- */
+    const noise = this._makeNoise(track.noise);
+    const nf = this.ctx.createBiquadFilter();
+    nf.type = 'lowpass'; nf.frequency.value = track.filter || 800;
+    const gn = this.ctx.createGain(); gn.gain.value = track.noiseLv || .04;
+    noise.connect(nf).connect(gn).connect(this.masterGain);
+    n.push(noise);
+
+    /* --- LFO tremolo (subtle) --- */
+    const lfo = this.ctx.createOscillator();
+    lfo.type = 'sine';
+    lfo.frequency.value = track.beat < 5 ? .08 : .15;
+    const lfoGain = this.ctx.createGain();
+    lfoGain.gain.value = .04;
+    lfo.connect(lfoGain).connect(this.masterGain.gain);
+    lfo.start(); n.push(lfo);
+
+    this.nodes = n;
+
+    /* fade in */
+    this.masterGain.gain.cancelScheduledValues(now);
+    this.masterGain.gain.setValueAtTime(0, now);
+    this.masterGain.gain.linearRampToValueAtTime(volume, now + this._fadeSec);
+
+    this.playing = true;
+  }
+
+  stop(){
+    if(!this.playing || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    this.masterGain.gain.cancelScheduledValues(now);
+    this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
+    this.masterGain.gain.linearRampToValueAtTime(0, now + this._fadeSec);
+
+    const nodes = this.nodes;
+    setTimeout(()=>{
+      nodes.forEach(nd=>{
+        try{nd.stop()}catch(e){}
+        try{nd.disconnect()}catch(e){}
+      });
+    }, this._fadeSec * 1000 + 100);
+
+    this.nodes = [];
+    this.playing = false;
+  }
+
+  setVolume(v){
+    if(!this.masterGain) return;
+    this.masterGain.gain.cancelScheduledValues(this.ctx.currentTime);
+    this.masterGain.gain.linearRampToValueAtTime(v, this.ctx.currentTime + .1);
+  }
+
+  getFreqData(){
+    if(!this.analyser) return null;
+    const arr = new Uint8Array(this.analyser.frequencyBinCount);
+    this.analyser.getByteFrequencyData(arr);
+    return arr;
+  }
+}
+
+/* ============================================================
+   VISUALIZER
+   ============================================================ */
+class Visualizer {
+  constructor(canvas, engine){
+    this.canvas = canvas;
+    this.c = canvas.getContext('2d');
+    this.engine = engine;
+    this.color = '#6c5ce7';
+    this._raf = null;
+    this._resize();
+    window.addEventListener('resize',()=>this._resize());
+  }
+  _resize(){
+    const r = this.canvas.parentElement.getBoundingClientRect();
+    this.canvas.width = r.width * devicePixelRatio;
+    this.canvas.height = r.height * devicePixelRatio;
+    this.c.scale(devicePixelRatio, devicePixelRatio);
+    this.w = r.width; this.h = r.height;
+  }
+  setColor(c){ this.color = c }
+  start(){
+    if(this._raf) return;
+    const draw = ()=>{
+      this._raf = requestAnimationFrame(draw);
+      const data = this.engine.getFreqData();
+      const ctx = this.c;
+      ctx.clearRect(0,0,this.w,this.h);
+
+      if(!data){ return; }
+
+      const bars = 64;
+      const step = Math.floor(data.length / bars);
+      const bw = this.w / bars;
+      const gap = 2;
+
+      for(let i=0;i<bars;i++){
+        const val = data[i * step] / 255;
+        const bh = Math.max(2, val * this.h * .9);
+        const x = i * bw;
+        const y = (this.h - bh) / 2;
+        const alpha = .3 + val * .7;
+
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.roundRect(x + gap/2, y, bw - gap, bh, 3);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    };
+    draw();
+  }
+  stop(){
+    if(this._raf){ cancelAnimationFrame(this._raf); this._raf=null; }
+    this.c.clearRect(0,0,this.w,this.h);
+  }
+}
+
+/* roundRect polyfill */
+if(!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+    this.moveTo(x+r,y);
+    this.arcTo(x+w,y,x+w,y+h,r);
+    this.arcTo(x+w,y+h,x,y+h,r);
+    this.arcTo(x,y+h,x,y,r);
+    this.arcTo(x,y,x+w,y,r);
+    this.closePath();
+  }
+}
+
+/* ============================================================
+   APP CONTROLLER
+   ============================================================ */
+const engine = new AudioEngine();
+const viz = new Visualizer(document.getElementById('vizCanvas'), engine);
+
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+const moodGrid     = $('#moodGrid');
+const trackSection = $('#trackSection');
+const trackGrid    = $('#trackGrid');
+const trackTitle   = $('#trackTitle');
+const moodBadge    = $('#moodBadge');
+const playerBar    = $('#playerBar');
+const btnPlay      = $('#btnPlay');
+const playerTrack  = $('#playerTrackName');
+const playerMood   = $('#playerMoodName');
+const volSlider    = $('#volSlider');
+const volIcon      = $('#volIcon');
+const timerSelect  = $('#timerSelect');
+const timerDisplay = $('#timerDisplay');
+
+let currentMood    = null;
+let currentTrack   = null;
+let isPlaying      = false;
+let timerInterval  = null;
+let timerRemaining = 0;
+
+/* ---- Volume ---- */
+function getVolume(){ return volSlider.value / 100 * .7 }
+
+volSlider.addEventListener('input',()=>{
+  engine.setVolume(getVolume());
+  volIcon.textContent = volSlider.value == 0 ? '🔇' : volSlider.value < 40 ? '🔉' : '🔊';
+});
+
+/* ---- Mood Selection ---- */
+moodGrid.addEventListener('click', e => {
+  const card = e.target.closest('.mood-card');
+  if(!card) return;
+  const mood = card.dataset.mood;
+  selectMood(mood);
+});
+
+function selectMood(mood){
+  currentMood = mood;
+  const data = TRACKS[mood];
+
+  /* highlight card */
+  $$('.mood-card').forEach(c => c.classList.toggle('active', c.dataset.mood===mood));
+
+  /* change background orbs */
+  const orbs = $$('.bg-orb');
+  data.orbColors.forEach((c,i)=>{ if(orbs[i]) orbs[i].style.background = c });
+
+  /* render tracks */
+  trackSection.classList.remove('hidden');
+  trackTitle.textContent = data.label;
+  moodBadge.textContent = data.label;
+  moodBadge.style.cssText = data.badge;
+
+  trackGrid.innerHTML = data.tracks.map(t => `
+    <div class="track-card" data-id="${t.id}" style="--track-active:${data.color}">
+      <span class="track-icon">${t.icon}</span>
+      <div class="track-name">${t.name}</div>
+      <div class="track-desc">${t.desc}</div>
+      <div class="track-hz">${t.beat} Hz beat · ${t.carrier} Hz</div>
+    </div>
+  `).join('');
+
+  /* track click */
+  trackGrid.querySelectorAll('.track-card').forEach(tc=>{
+    tc.addEventListener('click',()=> selectTrack(tc.dataset.id));
+  });
+
+  trackSection.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+/* ---- Track Selection ---- */
+function selectTrack(id){
+  const moodData = TRACKS[currentMood];
+  const track = moodData.tracks.find(t=>t.id===id);
+  if(!track) return;
+  currentTrack = track;
+
+  /* highlight */
+  trackGrid.querySelectorAll('.track-card').forEach(c=>
+    c.classList.toggle('active', c.dataset.id===id)
+  );
+
+  /* player UI */
+  playerTrack.textContent = track.name;
+  playerMood.textContent = moodData.label;
+  playerBar.classList.add('visible');
+  viz.setColor(moodData.color);
+
+  /* auto‑play */
+  startPlayback();
+}
+
+/* ---- Playback ---- */
+function startPlayback(){
+  if(!currentTrack) return;
+  engine.play(currentTrack, getVolume());
+  isPlaying = true;
+  btnPlay.textContent = '⏸';
+  viz.start();
+  startTimer();
+}
+
+function stopPlayback(){
+  engine.stop();
+  isPlaying = false;
+  btnPlay.textContent = '▶';
+  viz.stop();
+  clearTimerInterval();
+}
+
+btnPlay.addEventListener('click',()=>{
+  if(isPlaying) stopPlayback();
+  else startPlayback();
+});
+
+/* ---- Timer ---- */
+function clearTimerInterval(){
+  if(timerInterval){ clearInterval(timerInterval); timerInterval=null; }
+}
+
+function startTimer(){
+  clearTimerInterval();
+  const mins = parseInt(timerSelect.value);
+  if(mins===0){ timerDisplay.textContent='∞'; return; }
+
+  timerRemaining = mins * 60;
+  updateTimerDisplay();
+  timerInterval = setInterval(()=>{
+    timerRemaining--;
+    if(timerRemaining<=0){
+      stopPlayback();
+      timerDisplay.textContent='Done';
+      return;
+    }
+    updateTimerDisplay();
+  },1000);
+}
+
+function updateTimerDisplay(){
+  const m = Math.floor(timerRemaining/60);
+  const s = timerRemaining%60;
+  timerDisplay.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+timerSelect.addEventListener('change',()=>{
+  if(isPlaying) startTimer();
+});
+
+/* ---- keyboard shortcuts ---- */
+document.addEventListener('keydown',e=>{
+  if(e.code==='Space' && currentTrack){
+    e.preventDefault();
+    if(isPlaying) stopPlayback(); else startPlayback();
+  }
+});
+</script>
+</body>
+</html>
