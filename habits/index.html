@@ -63,6 +63,8 @@
         }
         .toast.show { opacity: 1; transform: translateY(0); }
         .toast.success { border-left-color: var(--zone-green); }
+        .toast.alert { border-left-color: var(--zone-orange); }
+        .toast.motivate { border-left-color: var(--primary); }
 
         /* --- Auth Modal --- */
         #authOverlay {
@@ -129,7 +131,7 @@
         .name-input:focus { border-bottom: 2px dashed var(--primary); margin-bottom: -2px; }
         .name-input::placeholder { color: var(--border-med); }
 
-        /* --- Components (Chart, Cards, Table, Footer, Quotes, Modals) --- */
+        /* --- Components --- */
         .chart-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
         .chart-title { display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 700; color: var(--text-dark); }
         .chart-title i { color: var(--text-muted); font-size: 24px; }
@@ -256,11 +258,7 @@
         .modal-btn-danger { background: var(--zone-red); color: white; }
         .modal-btn-danger:hover { filter: brightness(1.1); }
 
-        @media (max-width: 1024px) {
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .add-habit-bar { flex-wrap: wrap; }
-            .add-input-wrapper { min-width: 100%; order: 3; }
-        }
+        @media (max-width: 1024px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .add-habit-bar { flex-wrap: wrap; } .add-input-wrapper { min-width: 100%; order: 3; } }
         @media (max-width: 640px) {
             body { padding: 10px; }
             .app-container { padding: 16px; gap: 16px; border-radius: 16px; padding-top: 60px; }
@@ -306,7 +304,6 @@
     </div>
 
     <div class="app-container">
-        
         <div class="top-controls">
             <button class="icon-btn" id="themeBtn" title="Toggle Dark Mode"><i class="ph-bold ph-moon" id="themeIcon"></i></button>
             <button class="icon-btn" id="logoutBtn" title="Logout" style="color: var(--zone-red);"><i class="ph-bold ph-sign-out"></i></button>
@@ -343,71 +340,37 @@
         </div>
 
         <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon-wrapper" style="background: var(--primary-light); color: var(--primary);"><i class="ph-fill ph-check-circle"></i></div>
-                <div class="stat-content"><div class="stat-label">This Month</div><div class="stat-value" id="statAvg">0%</div><div class="stat-subtext">Avg. Completion</div></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon-wrapper" style="background: rgba(34, 197, 94, 0.15); color: var(--zone-green);"><i class="ph-fill ph-fire"></i></div>
-                <div class="stat-content"><div class="stat-label">Longest Streak</div><div class="stat-value" id="statStreak">0</div><div class="stat-subtext">Days <br><span style="color: var(--text-dark); font-weight: 500;">Keep it up! 🔥</span></div></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon-wrapper" style="background: rgba(2, 132, 199, 0.15); color: #0284c7;"><i class="ph-fill ph-target"></i></div>
-                <div class="stat-content"><div class="stat-label">Total Completed</div><div class="stat-value" id="statTotal">0</div><div class="stat-subtext">Habits <br><span style="color: var(--text-dark); font-weight: 500;">Great progress! 🥳</span></div></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon-wrapper" style="background: rgba(234, 179, 8, 0.15); color: var(--zone-yellow);"><i class="ph-fill ph-star"></i></div>
-                <div class="stat-content"><div class="stat-label">Best Habit</div><div class="stat-value" id="statBest" style="font-size: 18px; line-height: 1.2;">-</div><div class="stat-subtext" id="statBestStreak" style="margin-top: 5px;">0 day streak</div></div>
-            </div>
+            <div class="stat-card"><div class="stat-icon-wrapper" style="background: var(--primary-light); color: var(--primary);"><i class="ph-fill ph-check-circle"></i></div><div class="stat-content"><div class="stat-label">This Month</div><div class="stat-value" id="statAvg">0%</div><div class="stat-subtext">Avg. Completion</div></div></div>
+            <div class="stat-card"><div class="stat-icon-wrapper" style="background: rgba(34, 197, 94, 0.15); color: var(--zone-green);"><i class="ph-fill ph-fire"></i></div><div class="stat-content"><div class="stat-label">Longest Streak</div><div class="stat-value" id="statStreak">0</div><div class="stat-subtext">Days <br><span style="color: var(--text-dark); font-weight: 500;">Keep it up! 🔥</span></div></div></div>
+            <div class="stat-card"><div class="stat-icon-wrapper" style="background: rgba(2, 132, 199, 0.15); color: #0284c7;"><i class="ph-fill ph-target"></i></div><div class="stat-content"><div class="stat-label">Total Completed</div><div class="stat-value" id="statTotal">0</div><div class="stat-subtext">Habits <br><span style="color: var(--text-dark); font-weight: 500;">Great progress! 🥳</span></div></div></div>
+            <div class="stat-card"><div class="stat-icon-wrapper" style="background: rgba(234, 179, 8, 0.15); color: var(--zone-yellow);"><i class="ph-fill ph-star"></i></div><div class="stat-content"><div class="stat-label">Best Habit</div><div class="stat-value" id="statBest" style="font-size: 18px; line-height: 1.2;">-</div><div class="stat-subtext" id="statBestStreak" style="margin-top: 5px;">0 day streak</div></div></div>
         </div>
 
         <div class="add-habit-bar">
             <div class="add-label"><i class="ph ph-plus"></i> Add New Habit</div>
             <div class="add-input-wrapper">
                 <div class="picker-btn" id="emojiBtn" onclick="toggleEmojiPicker()">🏃<div class="emoji-dropdown" id="emojiDropdown"></div></div>
-                <div class="picker-btn" title="Pick Color">
-                    <span class="color-dot" id="colorDotPreview" style="background: #22c55e;"></span>
-                    <input type="color" class="color-input-hidden" id="colorPicker" value="#22c55e" onchange="updateColorPreview()">
-                </div>
+                <div class="picker-btn" title="Pick Color"><span class="color-dot" id="colorDotPreview" style="background: #22c55e;"></span><input type="color" class="color-input-hidden" id="colorPicker" value="#22c55e" onchange="updateColorPreview()"></div>
                 <input type="text" id="habitInput" placeholder="Type a habit (e.g. Read 30 mins)..." onkeypress="if(event.key === 'Enter') addHabit()">
             </div>
             <button class="btn-primary" onclick="addHabit()">Add Habit</button>
         </div>
 
         <div class="table-container">
-            <table>
-                <thead><tr id="tableHeader"></tr></thead>
-                <tbody id="tableBody"></tbody>
-            </table>
+            <table><thead><tr id="tableHeader"></tr></thead><tbody id="tableBody"></tbody></table>
         </div>
 
         <div class="footer-summary">
-            <div class="footer-section">
-                <div class="footer-title">This Week Summary</div><div class="footer-date" id="footerDateRange">May 7 - May 13</div>
-            </div>
-            <div class="footer-section" style="align-items: center; border-left: 1px solid var(--border-light); padding-left: 30px;">
-                <div class="footer-label">Completed</div>
-                <div class="footer-val-block"><div class="footer-val-icon" style="background: var(--zone-green);"><i class="ph-fill ph-check-circle"></i></div><div class="footer-val-text"><span id="footCompleted" style="font-size: 20px;">0</span> <span class="footer-val-sub">habits</span></div></div>
-            </div>
-            <div class="footer-section" style="align-items: center; border-left: 1px solid var(--border-light); padding-left: 30px;">
-                <div class="footer-label">Success Rate</div>
-                <div class="success-rate-val" id="footRate">0%</div><div class="success-bar"><div class="success-fill" id="footRateBar"></div></div>
-            </div>
-            <div class="footer-section" style="border-left: 1px solid var(--border-light); padding-left: 30px;">
-                <div class="footer-label">Most Consistent</div>
-                <div class="footer-val-block" style="margin-top: 4px;"><div class="footer-val-icon" id="footConsistentIcon" style="background: var(--primary);"><i class="ph-fill ph-flower-lotus"></i></div><div class="footer-val-text" style="color: var(--primary); font-size: 14px;" id="footConsistentName">-<br><span class="footer-val-sub" style="color: var(--primary); opacity: 0.8;" id="footConsistentStreak">0 day streak</span></div></div>
-            </div>
-            <div class="footer-section" style="border-left: 1px solid var(--border-light); padding-left: 30px;">
-                <div class="footer-label">Needs Focus</div>
-                <div class="footer-val-block" style="margin-top: 4px;"><div class="footer-val-icon" id="footFocusIcon" style="background: var(--zone-red);"><i class="ph-fill ph-moon"></i></div><div class="footer-val-text" id="footFocusName">-<br><span class="footer-val-sub" id="footFocusStreak">0 day streak</span></div></div>
-            </div>
+            <div class="footer-section"><div class="footer-title">This Week Summary</div><div class="footer-date" id="footerDateRange">May 7 - May 13</div></div>
+            <div class="footer-section" style="align-items: center; border-left: 1px solid var(--border-light); padding-left: 30px;"><div class="footer-label">Completed</div><div class="footer-val-block"><div class="footer-val-icon" style="background: var(--zone-green);"><i class="ph-fill ph-check-circle"></i></div><div class="footer-val-text"><span id="footCompleted" style="font-size: 20px;">0</span> <span class="footer-val-sub">habits</span></div></div></div>
+            <div class="footer-section" style="align-items: center; border-left: 1px solid var(--border-light); padding-left: 30px;"><div class="footer-label">Success Rate</div><div class="success-rate-val" id="footRate">0%</div><div class="success-bar"><div class="success-fill" id="footRateBar"></div></div></div>
+            <div class="footer-section" style="border-left: 1px solid var(--border-light); padding-left: 30px;"><div class="footer-label">Most Consistent</div><div class="footer-val-block" style="margin-top: 4px;"><div class="footer-val-icon" id="footConsistentIcon" style="background: var(--primary);"><i class="ph-fill ph-flower-lotus"></i></div><div class="footer-val-text" style="color: var(--primary); font-size: 14px;" id="footConsistentName">-<br><span class="footer-val-sub" style="color: var(--primary); opacity: 0.8;" id="footConsistentStreak">0 day streak</span></div></div></div>
+            <div class="footer-section" style="border-left: 1px solid var(--border-light); padding-left: 30px;"><div class="footer-label">Needs Focus</div><div class="footer-val-block" style="margin-top: 4px;"><div class="footer-val-icon" id="footFocusIcon" style="background: var(--zone-red);"><i class="ph-fill ph-moon"></i></div><div class="footer-val-text" id="footFocusName">-<br><span class="footer-val-sub" id="footFocusStreak">0 day streak</span></div></div></div>
         </div>
 
         <div class="quotes-section">
             <button class="quote-nav-btn" onclick="prevQuote()" title="Previous Quote"><i class="ph-bold ph-caret-left"></i></button>
-            <div class="quote-card">
-                <div class="quote-content" id="quoteContent">"Loading inspiration..."</div><div class="quote-author" id="quoteAuthor">- Daily Quote</div>
-            </div>
+            <div class="quote-card"><div class="quote-content" id="quoteContent">"Loading inspiration..."</div><div class="quote-author" id="quoteAuthor">- Daily Quote</div></div>
             <button class="quote-nav-btn" onclick="nextQuote()" title="Next Quote"><i class="ph-bold ph-caret-right"></i></button>
         </div>
     </div>
@@ -427,11 +390,16 @@
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             
-            // --- Toast Logic ---
+            // --- Toast Infrastructure ---
             window.showToast = function(message, type = 'error') {
                 const container = document.getElementById('toastContainer');
                 const toast = document.createElement('div');
-                const icon = type === 'success' ? '<i class="ph-bold ph-check-circle" style="color:var(--zone-green); font-size: 20px;"></i>' : '<i class="ph-bold ph-warning-circle" style="color:var(--zone-red); font-size: 20px;"></i>';
+                
+                let icon = '<i class="ph-bold ph-warning-circle" style="color:var(--zone-red); font-size: 20px;"></i>';
+                if(type === 'success') icon = '<i class="ph-bold ph-check-circle" style="color:var(--zone-green); font-size: 20px;"></i>';
+                if(type === 'alert') icon = '<i class="ph-bold ph-bell" style="color:var(--zone-orange); font-size: 20px;"></i>';
+                if(type === 'motivate') icon = '<i class="ph-bold ph-rocket" style="color:var(--primary); font-size: 20px;"></i>';
+
                 toast.className = `toast show ${type}`;
                 toast.innerHTML = `${icon} <span>${message}</span>`;
                 container.appendChild(toast);
@@ -439,21 +407,20 @@
                 setTimeout(() => {
                     toast.classList.remove('show');
                     setTimeout(() => toast.remove(), 300);
-                }, 3000);
+                }, 4000);
             };
 
             if (typeof window.supabase === 'undefined') {
-                showToast("Supabase library failed to load. Check your internet connection.");
-                return;
+                showToast("Supabase library failed to load. Check your internet connection."); return;
             }
 
-            // --- Supabase Setup ---
+            // --- Supabase Client Initialization ---
             const supabaseUrl = 'https://yryhvecsagzykicgnvds.supabase.co';
             const supabaseKey = 'sb_publishable_SLavwCzy_oOjUasq8v_SKQ_ZKm8-6wx';
             const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
             let user = null; let currentDate = new Date(); let habits = []; let completions = {}; 
-            let chartInstance = null; let habitToDelete = null; 
+            let chartInstance = null; let habitToDelete = null; let realtimeSubscription = null;
             
             document.getElementById('loginBtn').addEventListener('click', handleLogin);
             document.getElementById('signupBtn').addEventListener('click', handleSignup);
@@ -478,30 +445,46 @@
 
             initEmojiPicker(); initQuotes(); updateGreeting();
             
+            // --- Session Evaluation ---
             const { data: { session } } = await supabase.auth.getSession();
             if(session) {
                 user = session.user; document.getElementById('authOverlay').style.display = 'none';
                 await fetchCloudData();
+                initRealtimeNotifications();
             } else { renderAll(); }
+
+            // --- Realtime Notifications Subscription ---
+            function initRealtimeNotifications() {
+                if(!user) return;
+                if(realtimeSubscription) supabase.removeChannel(realtimeSubscription);
+                
+                realtimeSubscription = supabase.channel('custom-notifications-channel')
+                    .on('postgres_changes', { 
+                        event: 'INSERT', 
+                        schema: 'public', 
+                        table: 'notifications', 
+                        filter: `user_id=eq.${user.id}` 
+                    }, payload => {
+                        showToast(`🔔 ${payload.new.title}: ${payload.new.message}`, 'motivate');
+                    })
+                    .subscribe();
+            }
 
             // --- Authentication ---
             async function handleLogin() {
-                const email = document.getElementById('emailInput').value;
-                const password = document.getElementById('passwordInput').value;
-                
+                const email = document.getElementById('emailInput').value; const password = document.getElementById('passwordInput').value;
                 const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) { showToast(error.message, 'error'); } 
                 else {
                     user = data.user; document.getElementById('authOverlay').style.display = 'none';
                     showToast('Logged in successfully!', 'success');
                     await fetchCloudData();
+                    initRealtimeNotifications();
                 }
             }
 
             async function handleSignup() {
-                const email = document.getElementById('emailInput').value;
-                const password = document.getElementById('passwordInput').value;
-                
+                const email = document.getElementById('emailInput').value; const password = document.getElementById('passwordInput').value;
                 const { data, error } = await supabase.auth.signUp({ email, password });
                 if (error) { showToast(error.message, 'error'); } 
                 else {
@@ -509,19 +492,20 @@
                     showToast('Account created successfully!', 'success');
                     await supabase.from('profiles').upsert({ id: user.id, full_name: 'Habit Builder' });
                     await fetchCloudData();
+                    initRealtimeNotifications();
                 }
             }
 
             async function handleLogout() {
                 await supabase.auth.signOut();
-                user = null; habits = []; completions = {};
+                if(realtimeSubscription) supabase.removeChannel(realtimeSubscription);
+                user = null; habits = []; completions = {}; realtimeSubscription = null;
                 document.getElementById('authOverlay').style.display = 'flex';
                 document.getElementById('emailInput').value = ''; document.getElementById('passwordInput').value = '';
-                showToast('Logged out successfully', 'success');
-                renderAll();
+                showToast('Logged out successfully', 'success'); renderAll();
             }
 
-            // --- Database Sync ---
+            // --- Database Vectors ---
             async function fetchCloudData() {
                 if(!user) return;
                 const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
@@ -541,60 +525,41 @@
                 renderAll();
             }
 
-            // NAME SYNC
             window.saveName = async function() {
                 if(!user) return;
                 let name = document.getElementById('userNameInput').value.trim();
                 if(!name) { name = 'Habit Builder'; document.getElementById('userNameInput').value = name; }
-                
                 const { error } = await supabase.from('profiles').upsert({ id: user.id, full_name: name });
-                if(error) showToast("Failed to sync name", "error");
-                else showToast("Profile name saved", "success");
+                if(error) showToast("Failed to sync name", "error"); else showToast("Profile name saved", "success");
             };
 
-            // DP STORAGE UPLOAD & DELETE
             window.handleImageUpload = async function(event) {
-                const file = event.target.files[0];
-                if (!file || !user) return;
-
+                const file = event.target.files[0]; if (!file || !user) return;
                 showToast('Uploading profile picture...', 'success');
-
-                const fileExt = file.name.split('.').pop();
-                const fileName = `${Date.now()}.${fileExt}`;
-                const filePath = `${user.id}/${fileName}`;
+                const fileExt = file.name.split('.').pop(); const filePath = `${user.id}/${Date.now()}.${fileExt}`;
 
                 try {
-                    // 1. Delete old images to save storage
                     const { data: oldFiles } = await supabase.storage.from('avatars').list(user.id);
                     if (oldFiles && oldFiles.length > 0) {
                         const filesToRemove = oldFiles.map(f => `${user.id}/${f.name}`);
                         await supabase.storage.from('avatars').remove(filesToRemove);
                     }
-
-                    // 2. Upload new image
                     const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file);
                     if (uploadError) throw uploadError;
-
-                    // 3. Get Public URL and Update Database
                     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
                     
                     document.getElementById('profileImage').src = publicUrl;
                     await supabase.from('profiles').upsert({ id: user.id, avatar_pic: publicUrl });
-                    
                     showToast('Profile picture updated!', 'success');
-                } catch (error) {
-                    showToast('Failed to upload image: ' + error.message, 'error');
-                }
+                } catch (error) { showToast('Failed to upload image: ' + error.message, 'error'); }
             };
 
             window.addHabit = async function() {
                 if(!user) { showToast("Please log in to add habits."); return; }
-                const input = document.getElementById('habitInput');
-                const colorInput = document.getElementById('colorPicker');
+                const input = document.getElementById('habitInput'); const colorInput = document.getElementById('colorPicker');
                 const name = input.value.trim();
                 if(name) {
-                    input.value = '';
-                    const tempId = 'temp-' + Date.now();
+                    input.value = ''; const tempId = 'temp-' + Date.now();
                     habits.unshift({ id: tempId, name, emoji: selectedEmoji, color: colorInput.value });
                     renderAll();
 
@@ -606,28 +571,56 @@
                 }
             };
 
+            // --- Motivational State Engine Calculation ---
+            function getTodayCompletions() {
+                let count = 0; const today = currentDate.getDate();
+                habits.forEach(h => { if(completions[`${currentDate.getFullYear()}-${currentDate.getMonth()}-${today}-${h.id}`]) count++; });
+                return count;
+            }
+
             window.toggleCompletion = async function(day, habitId) {
                 if(!user) return;
+                
+                // Track scalar completions prior to mutation
+                const isToday = (day === new Date().getDate() && currentDate.getMonth() === new Date().getMonth());
+                let completionsBefore = isToday ? getTodayCompletions() : 0;
+                
                 const dateStr = `${currentDate.getFullYear()}-${currentDate.getMonth()}-${day}`;
                 const key = `${dateStr}-${habitId}`;
+                let isAdding = false;
                 
                 if(completions[key]) {
                     delete completions[key]; renderAll(); 
                     await supabase.from('completions').delete().match({ habit_id: habitId, date_string: dateStr, user_id: user.id });
                 } else {
-                    completions[key] = true; renderAll(); 
+                    completions[key] = true; isAdding = true; renderAll(); 
                     await supabase.from('completions').insert([{ user_id: user.id, habit_id: habitId, date_string: dateStr }]);
+                }
+
+                // Motivational Evaluation Logic
+                if (isToday && isAdding && habits.length > 0) {
+                    let completionsAfter = getTodayCompletions();
+                    let total = habits.length;
+                    let left = total - completionsAfter;
+                    let pct = completionsAfter / total;
+
+                    if (left === 0) {
+                        showToast("Incredible! 100% habits completed today! 🔥", "motivate");
+                    } else if (left === 1) {
+                        showToast("Only 1 habit left! You're almost there! 🚀", "alert");
+                    } else if (pct >= 0.8) {
+                        showToast(`80% work done! Only ${left} left to go! 💪`, "motivate");
+                    } else if (pct >= 0.5 && (completionsBefore / total) < 0.5) {
+                        showToast("Halfway there! Keep up the momentum! ✨", "success");
+                    }
                 }
             };
 
             async function confirmDelete() {
                 if(habitToDelete && user) {
-                    const idToDelete = habitToDelete;
-                    habits = habits.filter(h => h.id !== idToDelete);
+                    const idToDelete = habitToDelete; habits = habits.filter(h => h.id !== idToDelete);
                     Object.keys(completions).forEach(key => { if(key.endsWith(`-${idToDelete}`)) delete completions[key]; });
-                    renderAll(); 
-                    await supabase.from('habits').delete().eq('id', idToDelete);
-                    showToast('Habit deleted', 'success');
+                    renderAll(); await supabase.from('habits').delete().eq('id', idToDelete); showToast('Habit deleted', 'success');
                 }
                 closeDeleteModal();
             }
@@ -636,31 +629,24 @@
             window.closeDeleteModal = function() { habitToDelete = null; document.getElementById('deleteModal').classList.remove('show'); };
 
             function updateGreeting() {
-                const hour = new Date().getHours();
-                let greeting = 'Good morning';
+                const hour = new Date().getHours(); let greeting = 'Good morning';
                 if (hour >= 12 && hour < 17) greeting = 'Good afternoon';
                 else if (hour >= 17 && hour < 21) greeting = 'Good evening';
                 else if (hour >= 21 || hour < 5) greeting = 'Good night';
                 document.getElementById('greetingText').textContent = greeting + ',';
             }
 
-            // --- Quotes Logic ---
+            // --- Quotes Extraction ---
             async function initQuotes() {
                 try {
-                    let cachedQuotes = [];
-                    try { cachedQuotes = JSON.parse(localStorage.getItem('exact_quotes_repo')); } catch(e){}
-                    if (cachedQuotes && cachedQuotes.length > 0) {
-                        quotesList = cachedQuotes; setRandomQuote();
-                    } else {
+                    let cachedQuotes = []; try { cachedQuotes = JSON.parse(localStorage.getItem('exact_quotes_repo')); } catch(e){}
+                    if (cachedQuotes && cachedQuotes.length > 0) { quotesList = cachedQuotes; setRandomQuote(); } 
+                    else {
                         const response = await fetch('https://raw.githubusercontent.com/dwyl/quotes/main/quotes.json');
-                        quotesList = await response.json();
-                        localStorage.setItem('exact_quotes_repo', JSON.stringify(quotesList));
+                        quotesList = await response.json(); localStorage.setItem('exact_quotes_repo', JSON.stringify(quotesList));
                         setRandomQuote();
                     }
-                } catch (error) {
-                    quotesList = [{ text: "Small daily improvements over time lead to stunning results.", author: "Robin Sharma" }];
-                    displayQuote(0);
-                }
+                } catch (error) { quotesList = [{ text: "Small daily improvements over time lead to stunning results.", author: "Robin Sharma" }]; displayQuote(0); }
             }
             function setRandomQuote() { if(quotesList.length === 0) return; currentQuoteIndex = Math.floor(Math.random() * quotesList.length); displayQuote(currentQuoteIndex); }
             function displayQuote(index) {
@@ -670,15 +656,12 @@
             window.nextQuote = function() { if(quotesList.length > 0) { currentQuoteIndex = (currentQuoteIndex + 1) % quotesList.length; displayQuote(currentQuoteIndex); } };
             window.prevQuote = function() { if(quotesList.length > 0) { currentQuoteIndex = (currentQuoteIndex - 1 + quotesList.length) % quotesList.length; displayQuote(currentQuoteIndex); } };
 
-            // --- Pickers ---
+            // --- UI Rendering ---
             function initEmojiPicker() {
                 const dropdown = document.getElementById('emojiDropdown');
                 emojiList.forEach(e => {
                     const div = document.createElement('div'); div.className = 'emoji-item'; div.textContent = e;
-                    div.onclick = (ev) => {
-                        ev.stopPropagation(); selectedEmoji = e;
-                        document.getElementById('emojiBtn').childNodes[0].nodeValue = e + ' '; toggleEmojiPicker();
-                    };
+                    div.onclick = (ev) => { ev.stopPropagation(); selectedEmoji = e; document.getElementById('emojiBtn').childNodes[0].nodeValue = e + ' '; toggleEmojiPicker(); };
                     dropdown.appendChild(div);
                 });
             }
@@ -686,7 +669,6 @@
             window.updateColorPreview = function() { document.getElementById('colorDotPreview').style.background = document.getElementById('colorPicker').value; };
             document.addEventListener('click', e => { if(!e.target.closest('#emojiBtn')) document.getElementById('emojiDropdown').classList.remove('show'); });
 
-            // --- Core Rendering ---
             function getDaysInMonth(date) { return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate(); }
             
             window.toggleChart = function() {
@@ -723,27 +705,17 @@
             }
 
             function renderChart(stats) {
-                const daysInMonth = getDaysInMonth(currentDate);
-                const labels = Array.from({length: daysInMonth}, (_, i) => `Day ${i+1}`);
+                const daysInMonth = getDaysInMonth(currentDate); const labels = Array.from({length: daysInMonth}, (_, i) => `Day ${i+1}`);
                 const ctx = document.getElementById('progressChart').getContext('2d');
                 if (chartInstance) chartInstance.destroy();
 
                 const getColor = (val) => { if(val >= 80) return '#22c55e'; if(val >= 50) return '#eab308'; if(val >= 30) return '#f97316'; return '#ef4444'; };
                 const gradientFill = ctx.createLinearGradient(0, 0, 0, 250);
-                gradientFill.addColorStop(0, isDarkMode ? 'rgba(34, 197, 94, 0.15)' : 'rgba(34, 197, 94, 0.25)'); 
-                gradientFill.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                gradientFill.addColorStop(0, isDarkMode ? 'rgba(34, 197, 94, 0.15)' : 'rgba(34, 197, 94, 0.25)'); gradientFill.addColorStop(1, 'rgba(255, 255, 255, 0)');
                 const gridColor = isDarkMode ? '#334155' : '#f1f5f9'; const tickColor = isDarkMode ? '#94a3b8' : '#94a3b8';
 
                 chartInstance = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: stats.dailyPercentages, fill: true, backgroundColor: gradientFill, borderWidth: 2, tension: 0.4, 
-                            pointRadius: 4, pointHoverRadius: 6, pointBorderColor: isDarkMode ? '#1e293b' : '#fff', pointBorderWidth: 2,
-                            pointBackgroundColor: ctx => getColor(ctx.raw), segment: { borderColor: ctx => getColor(ctx.p1.parsed.y) }
-                        }]
-                    },
+                    type: 'line', data: { labels: labels, datasets: [{ data: stats.dailyPercentages, fill: true, backgroundColor: gradientFill, borderWidth: 2, tension: 0.4, pointRadius: 4, pointHoverRadius: 6, pointBorderColor: isDarkMode ? '#1e293b' : '#fff', pointBorderWidth: 2, pointBackgroundColor: ctx => getColor(ctx.raw), segment: { borderColor: ctx => getColor(ctx.p1.parsed.y) } }] },
                     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: true } }, scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v+'%', stepSize: 20, color: tickColor, font:{size: 11} }, grid: { borderDash: [4, 4], color: gridColor, drawBorder: false } }, x: { ticks: { color: tickColor, font:{size: 11}, maxTicksLimit: window.innerWidth < 600 ? 7 : 15 }, grid: { display: false, drawBorder: false } } } }
                 });
             }
