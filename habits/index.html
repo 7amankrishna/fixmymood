@@ -3,10 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Responsive Exact Habit Tracker</title>
+    <title>Fix My Mood - Habit Tracker</title>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
             --bg-page: #eff2f9;
@@ -45,81 +49,73 @@
             --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.5);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
 
         body {
-            background-color: var(--bg-page);
-            color: var(--text-dark);
-            min-height: 100vh;
-            padding: 40px 20px;
-            display: flex;
-            justify-content: center;
+            background-color: var(--bg-page); color: var(--text-dark);
+            min-height: 100vh; padding: 40px 20px; display: flex; justify-content: center;
             transition: background-color 0.3s ease;
         }
 
         .app-container {
-            width: 100%;
-            max-width: 1200px;
-            background: var(--bg-card);
-            border-radius: 24px;
-            box-shadow: var(--shadow-lg);
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-            position: relative;
+            width: 100%; max-width: 1200px; background: var(--bg-card);
+            border-radius: 24px; box-shadow: var(--shadow-lg); padding: 30px;
+            display: flex; flex-direction: column; gap: 25px; position: relative;
             transition: background-color 0.3s ease, box-shadow 0.3s ease;
         }
 
-        /* --- Theme Toggle --- */
-        .theme-toggle {
-            position: absolute;
-            top: 25px;
-            right: 25px;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--bg-page);
-            border: 1px solid var(--border-med);
-            color: var(--text-dark);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            cursor: pointer;
-            transition: all 0.2s;
-            z-index: 10;
+        /* --- Auth Modal (Supabase) --- */
+        #authOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.9); z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(8px);
         }
-        .theme-toggle:hover { background: var(--border-light); transform: scale(1.05); }
+        .auth-card {
+            background: var(--bg-card); width: 100%; max-width: 400px;
+            padding: 30px; border-radius: 20px; box-shadow: var(--shadow-lg);
+            display: flex; flex-direction: column; gap: 20px; text-align: center;
+        }
+        .auth-title { font-family: 'Poppins', sans-serif; font-size: 24px; font-weight: 700; color: var(--text-dark); }
+        .auth-input {
+            width: 100%; padding: 12px 16px; border-radius: 8px;
+            border: 1px solid var(--border-med); background: var(--bg-input);
+            color: var(--text-dark); font-size: 15px; outline: none; transition: border 0.2s;
+        }
+        .auth-input:focus { border-color: var(--primary); }
+        .auth-btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        .auth-btn {
+            flex: 1; padding: 12px; border: none; border-radius: 8px;
+            font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 14px;
+        }
+        .btn-login { background: var(--primary); color: white; }
+        .btn-login:hover { filter: brightness(1.1); }
+        .btn-signup { background: var(--bg-page); color: var(--text-dark); border: 1px solid var(--border-med); }
+        .btn-signup:hover { background: var(--border-light); }
+        .auth-error { color: var(--zone-red); font-size: 13px; font-weight: 500; min-height: 20px;}
 
-        /* --- Profile Centered Header --- */
-        .header-profile {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-med);
-            text-align: center;
+        /* --- Header & Theme --- */
+        .top-controls { position: absolute; top: 25px; right: 25px; display: flex; gap: 10px;}
+        .icon-btn {
+            width: 40px; height: 40px; border-radius: 50%; background: var(--bg-page);
+            border: 1px solid var(--border-med); color: var(--text-dark); display: flex;
+            align-items: center; justify-content: center; font-size: 20px; cursor: pointer;
+            transition: all 0.2s; z-index: 10;
         }
-        
+        .icon-btn:hover { background: var(--border-light); transform: scale(1.05); }
+
+        .header-profile {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 12px; padding-bottom: 20px; border-bottom: 1px solid var(--border-med); text-align: center;
+        }
         .user-info { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-        
         .avatar-container { 
-            width: 80px; height: 80px; border-radius: 50%; overflow: hidden; 
-            position: relative; cursor: pointer; border: 3px solid var(--border-light);
-            box-shadow: var(--shadow-md); flex-shrink: 0; background: var(--border-light);
-            transition: transform 0.2s;
+            width: 80px; height: 80px; border-radius: 50%; overflow: hidden; position: relative; 
+            cursor: pointer; border: 3px solid var(--border-light); box-shadow: var(--shadow-md); 
+            flex-shrink: 0; background: var(--border-light); transition: transform 0.2s;
         }
         .avatar-container:hover { transform: scale(1.05); }
         .avatar-container img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        
         .avatar-overlay { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); color: white; display: flex; align-items: center; 
@@ -128,98 +124,43 @@
         .avatar-container:hover .avatar-overlay { opacity: 1; }
         
         .greeting-container { display: flex; flex-direction: column; gap: 2px; align-items: center; }
-        
-        .greeting { 
-            font-family: 'Poppins', sans-serif;
-            font-size: 16px; color: var(--text-muted); font-weight: 500; 
-        }
-        
+        .greeting { font-family: 'Poppins', sans-serif; font-size: 16px; color: var(--text-muted); font-weight: 500; }
         .name-input { 
-            font-family: 'Poppins', sans-serif;
-            font-size: 28px; font-weight: 700; color: var(--text-dark); border: none; 
-            background: transparent; outline: none; padding: 0; width: 100%; max-width: 300px; 
+            font-family: 'Poppins', sans-serif; font-size: 28px; font-weight: 700; color: var(--text-dark); 
+            border: none; background: transparent; outline: none; padding: 0; width: 100%; max-width: 300px; 
             text-align: center; transition: color 0.3s;
         }
         .name-input:focus { border-bottom: 2px dashed var(--primary); margin-bottom: -2px; }
         .name-input::placeholder { color: var(--border-med); }
 
         /* --- Chart Section --- */
-        .chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 10px;
-        }
-
-        .chart-title {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--text-dark);
-        }
-        
+        .chart-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .chart-title { display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 700; color: var(--text-dark); }
         .chart-title i { color: var(--text-muted); font-size: 24px; }
-
-        .chart-controls {
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
-        }
-
-        .legend {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            font-size: 13px;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
+        .chart-controls { display: flex; gap: 20px; align-items: flex-start; }
+        .legend { display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: var(--text-muted); font-weight: 500; }
         .legend-item { display: flex; align-items: center; gap: 8px; }
         .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
-
         .btn-outline {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-med);
-            padding: 8px 16px;
-            border-radius: 8px;
-            color: var(--primary);
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
+            display: flex; align-items: center; gap: 8px; background: var(--bg-card);
+            border: 1px solid var(--border-med); padding: 8px 16px; border-radius: 8px;
+            color: var(--primary); font-weight: 600; font-size: 13px; cursor: pointer;
+            transition: all 0.2s; white-space: nowrap;
         }
         .btn-outline:hover { background: var(--primary-light); }
-
         .chart-wrapper { position: relative; height: 250px; width: 100%; margin-bottom: 10px; }
 
         /* --- Stats Cards --- */
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-
         .stat-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-light);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: var(--shadow-sm);
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            transition: background-color 0.3s;
+            background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 16px;
+            padding: 20px; box-shadow: var(--shadow-sm); display: flex; align-items: center;
+            gap: 16px; transition: background-color 0.3s;
         }
-
         .stat-icon-wrapper {
-            width: 48px; height: 48px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 24px; flex-shrink: 0;
+            width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; 
+            justify-content: center; font-size: 24px; flex-shrink: 0;
         }
-
         .stat-content { display: flex; flex-direction: column; gap: 2px; }
         .stat-label { font-size: 13px; font-weight: 600; color: var(--text-dark); }
         .stat-value { font-size: 24px; font-weight: 700; color: var(--text-dark); display: flex; align-items: baseline; gap: 4px; }
@@ -228,73 +169,45 @@
 
         /* --- Add Habit Bar --- */
         .add-habit-bar {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-med);
-            border-radius: 12px;
-            padding: 10px 10px 10px 20px;
+            display: flex; align-items: center; gap: 15px; background: var(--bg-card);
+            border: 1px solid var(--border-med); border-radius: 12px; padding: 10px 10px 10px 20px;
         }
-
-        .add-label {
-            display: flex; align-items: center; gap: 8px;
-            color: var(--primary); font-weight: 600; font-size: 15px; white-space: nowrap;
-        }
-
+        .add-label { display: flex; align-items: center; gap: 8px; color: var(--primary); font-weight: 600; font-size: 15px; white-space: nowrap; }
         .add-input-wrapper {
-            flex: 1; display: flex; align-items: center; gap: 10px;
-            background: var(--bg-input);
-            border: 1px solid var(--border-light);
-            border-radius: 8px; padding: 8px 12px;
+            flex: 1; display: flex; align-items: center; gap: 10px; background: var(--bg-input);
+            border: 1px solid var(--border-light); border-radius: 8px; padding: 8px 12px;
         }
-
         .add-input-wrapper input[type="text"] {
-            border: none; background: transparent; flex: 1;
-            font-size: 14px; outline: none; color: var(--text-dark);
+            border: none; background: transparent; flex: 1; font-size: 14px; outline: none; color: var(--text-dark);
         }
         .add-input-wrapper input[type="text"]::placeholder { color: var(--text-muted); opacity: 0.7;}
-
-        /* Color & Emoji Pickers */
         .picker-btn {
-            background: var(--bg-card);
-            border: 1px solid var(--border-med);
-            border-radius: 6px; padding: 4px 8px;
-            cursor: pointer; font-size: 16px;
-            display: flex; align-items: center; justify-content: center;
-            position: relative;
+            background: var(--bg-card); border: 1px solid var(--border-med); border-radius: 6px; 
+            padding: 4px 8px; cursor: pointer; font-size: 16px; display: flex; align-items: center; 
+            justify-content: center; position: relative;
         }
-
         .color-dot { width: 16px; height: 16px; border-radius: 50%; display: block; cursor: pointer; }
         .color-input-hidden { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; top: 0; left: 0; }
-
         .emoji-dropdown {
-            position: absolute; top: 100%; left: 0; margin-top: 5px;
-            background: var(--bg-card); border: 1px solid var(--border-med);
-            border-radius: 8px; box-shadow: var(--shadow-md);
-            padding: 8px; display: none; grid-template-columns: repeat(6, 1fr);
-            gap: 4px; z-index: 100; max-height: 200px; overflow-y: auto; width: 220px;
+            position: absolute; top: 100%; left: 0; margin-top: 5px; background: var(--bg-card); 
+            border: 1px solid var(--border-med); border-radius: 8px; box-shadow: var(--shadow-md);
+            padding: 8px; display: none; grid-template-columns: repeat(6, 1fr); gap: 4px; 
+            z-index: 100; max-height: 200px; overflow-y: auto; width: 220px;
         }
-        
         .emoji-dropdown::-webkit-scrollbar { width: 6px; }
         .emoji-dropdown::-webkit-scrollbar-thumb { background: var(--border-med); border-radius: 4px; }
         .emoji-dropdown::-webkit-scrollbar-track { background: transparent; }
         .emoji-dropdown.show { display: grid; }
         .emoji-item { cursor: pointer; padding: 6px; text-align: center; border-radius: 4px; font-size: 18px; color: var(--text-dark);}
         .emoji-item:hover { background: var(--bg-page); }
-
         .btn-primary {
-            background: var(--primary); color: white; border: none;
-            padding: 10px 24px; border-radius: 8px; font-weight: 600;
-            font-size: 14px; cursor: pointer; transition: background 0.2s; white-space: nowrap;
+            background: var(--primary); color: white; border: none; padding: 10px 24px; border-radius: 8px; 
+            font-weight: 600; font-size: 14px; cursor: pointer; transition: background 0.2s; white-space: nowrap;
         }
         .btn-primary:hover { filter: brightness(1.1); }
 
         /* --- Table Area --- */
-        .table-container {
-            border: 1px solid var(--border-light);
-            border-radius: 16px; overflow: hidden; overflow-x: auto;
-        }
+        .table-container { border: 1px solid var(--border-light); border-radius: 16px; overflow: hidden; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; text-align: center; }
         th { background: var(--primary); color: white; padding: 12px 6px; font-weight: 500; min-width: 45px; }
         th .day-name { display: block; font-size: 12px; opacity: 0.9; margin-bottom: 2px; }
@@ -303,40 +216,32 @@
         th:first-child { padding-left: 20px; font-size: 14px; background: var(--primary); }
         td { padding: 10px 6px; border-bottom: 1px solid var(--border-light); background: var(--bg-card); transition: background-color 0.3s; }
         td:first-child { padding-left: 20px; border-right: 1px solid var(--border-light); }
-
         .habit-cell { display: flex; align-items: center; gap: 12px; }
         .habit-icon {
-            width: 32px; height: 32px; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 18px; flex-shrink: 0;
+            width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; 
+            justify-content: center; color: white; font-size: 18px; flex-shrink: 0;
         }
         .habit-info { display: flex; flex-direction: column; flex: 1; }
         .habit-title { font-size: 13px; font-weight: 600; color: var(--text-dark); }
         .habit-streak { font-size: 11px; color: var(--zone-orange); font-weight: 600; display: flex; align-items: center; gap: 2px; }
-
         .delete-btn {
-            background: var(--zone-red); color: white; border: none;
-            width: 20px; height: 20px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 12px; cursor: pointer; opacity: 0.2; transition: opacity 0.2s, transform 0.2s;
-            margin-right: 10px; flex-shrink: 0;
+            background: var(--zone-red); color: white; border: none; width: 20px; height: 20px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; 
+            opacity: 0.2; transition: opacity 0.2s, transform 0.2s; margin-right: 10px; flex-shrink: 0;
         }
         tr:hover .delete-btn { opacity: 0.8; }
         .delete-btn:hover { opacity: 1 !important; transform: scale(1.1); }
-
         .check-box {
-            width: 24px; height: 24px; margin: 0 auto;
-            border: 2px solid var(--border-med); border-radius: 6px;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            font-size: 14px; color: transparent; transition: all 0.15s; background: var(--bg-card);
+            width: 24px; height: 24px; margin: 0 auto; border: 2px solid var(--border-med); border-radius: 6px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; 
+            color: transparent; transition: all 0.15s; background: var(--bg-card);
         }
         .check-box.checked { background: var(--check-color); border-color: var(--check-color); color: white; }
 
         /* --- Footer Summary --- */
         .footer-summary {
-            display: flex; align-items: center; justify-content: space-between;
-            background: var(--bg-card); border: 1px solid var(--border-light);
-            border-radius: 16px; padding: 20px 30px; margin-top: 10px;
+            display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); 
+            border: 1px solid var(--border-light); border-radius: 16px; padding: 20px 30px; margin-top: 10px;
         }
         .footer-section { display: flex; flex-direction: column; gap: 6px; }
         .footer-title { font-size: 16px; font-weight: 700; color: var(--text-dark); }
@@ -344,77 +249,49 @@
         .footer-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
         .footer-val-block { display: flex; align-items: center; gap: 8px; }
         .footer-val-icon {
-            width: 24px; height: 24px; border-radius: 6px;
-            display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;
+            width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; 
+            justify-content: center; color: white; font-size: 12px;
         }
         .footer-val-text { font-size: 14px; font-weight: 600; color: var(--text-dark); }
         .footer-val-sub { font-size: 12px; color: var(--text-muted); font-weight: 400; }
-
         .success-rate-val { font-size: 20px; font-weight: 700; color: var(--text-dark); text-align: center; }
         .success-bar { width: 100px; height: 4px; background: var(--border-light); border-radius: 2px; margin-top: 4px; overflow: hidden; }
         .success-fill { height: 100%; background: var(--zone-green); border-radius: 2px; }
 
-        /* --- Dynamic Quotes Bottom Section --- */
+        /* --- Quotes Section --- */
         .quotes-section {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg-input);
-            border: 1px solid var(--border-light);
-            border-radius: 16px;
-            padding: 20px;
-            margin-top: 10px;
-            position: relative;
-            box-shadow: var(--shadow-sm);
+            display: flex; align-items: center; justify-content: center; background: var(--bg-input);
+            border: 1px solid var(--border-light); border-radius: 16px; padding: 20px; margin-top: 10px;
+            position: relative; box-shadow: var(--shadow-sm);
         }
         .quote-nav-btn {
-            background: var(--bg-card);
-            color: var(--text-dark);
-            border: 1px solid var(--border-med);
-            width: 40px; height: 40px;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; font-size: 18px;
-            transition: all 0.2s;
-            flex-shrink: 0;
-            box-shadow: var(--shadow-sm);
+            background: var(--bg-card); color: var(--text-dark); border: 1px solid var(--border-med);
+            width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 18px; transition: all 0.2s; flex-shrink: 0; box-shadow: var(--shadow-sm);
         }
         .quote-nav-btn:hover { background: var(--primary); color: white; border-color: var(--primary); transform: scale(1.05); }
-        
-        .quote-card { 
-            flex: 1; max-width: 600px; padding: 0 20px;
-            display: flex; flex-direction: column; gap: 8px; text-align: center;
-        }
+        .quote-card { flex: 1; max-width: 600px; padding: 0 20px; display: flex; flex-direction: column; gap: 8px; text-align: center; }
         .quote-content { font-family: 'Poppins', sans-serif; font-size: 16px; font-style: italic; color: var(--text-dark); line-height: 1.5; font-weight: 500;}
         .quote-author { font-size: 13px; color: var(--primary); font-weight: 600; }
 
-        /* --- Custom Modal --- */
+        /* --- Custom Delete Modal --- */
         .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5); z-index: 1000;
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
-            backdrop-filter: blur(2px);
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); 
+            z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; 
+            pointer-events: none; transition: opacity 0.2s ease; backdrop-filter: blur(2px);
         }
         .modal-overlay.show { opacity: 1; pointer-events: all; }
-        
         .modal-box {
-            background: var(--bg-card); border-radius: 16px; padding: 24px;
-            width: 90%; max-width: 340px; box-shadow: var(--shadow-lg);
-            transform: translateY(20px); transition: transform 0.2s ease; text-align: center;
+            background: var(--bg-card); border-radius: 16px; padding: 24px; width: 90%; max-width: 340px; 
+            box-shadow: var(--shadow-lg); transform: translateY(20px); transition: transform 0.2s ease; text-align: center;
         }
         .modal-overlay.show .modal-box { transform: translateY(0); }
-
         .modal-icon {
-            width: 48px; height: 48px; border-radius: 50%;
-            background: rgba(239, 68, 68, 0.15); color: var(--zone-red);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 24px; margin: 0 auto 16px auto;
+            width: 48px; height: 48px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); color: var(--zone-red);
+            display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 16px auto;
         }
-
         .modal-title { font-size: 18px; font-weight: 700; color: var(--text-dark); margin-bottom: 8px; }
         .modal-desc { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
-
         .modal-actions { display: flex; gap: 12px; }
         .modal-btn {
             flex: 1; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 14px;
@@ -431,37 +308,28 @@
             .add-habit-bar { flex-wrap: wrap; }
             .add-input-wrapper { min-width: 100%; order: 3; }
         }
-
         @media (max-width: 640px) {
             body { padding: 10px; }
-            .app-container { padding: 16px; gap: 16px; border-radius: 16px; padding-top: 50px; }
-
-            .theme-toggle { top: 15px; right: 15px; }
-
+            .app-container { padding: 16px; gap: 16px; border-radius: 16px; padding-top: 60px; }
+            .top-controls { top: 15px; right: 15px; }
             .chart-header { flex-direction: column; align-items: flex-start; gap: 16px; }
             .chart-controls { flex-direction: column; width: 100%; align-items: stretch; gap: 12px; }
             .legend { flex-direction: row; flex-wrap: wrap; justify-content: space-between; }
-            
             .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
             .stat-card { padding: 12px; flex-direction: column; text-align: center; gap: 8px; align-items: center; }
             .stat-value { justify-content: center; }
-            
             .add-habit-bar { flex-direction: column; align-items: stretch; padding: 16px; gap: 12px; }
             .add-label { justify-content: center; margin-bottom: 4px; font-size: 16px;}
             .btn-primary { width: 100%; }
-            
             th:first-child, td:first-child { min-width: 160px; padding-left: 10px; }
             .habit-cell { gap: 8px; }
             .habit-title { font-size: 12px; white-space: normal; line-height: 1.3; }
             .habit-icon { width: 28px; height: 28px; font-size: 14px; }
-            
             .footer-summary { flex-direction: column; align-items: stretch; padding: 16px; gap: 16px; }
             .footer-section { border-left: none !important; padding-left: 0 !important; padding-bottom: 16px; border-bottom: 1px solid var(--border-light); align-items: flex-start !important; }
             .footer-section:last-child { border-bottom: none; padding-bottom: 0; }
             .success-rate-val { text-align: left; }
-            
             .delete-btn { opacity: 0.6; width: 18px; height: 18px; margin-right: 6px;}
-            
             .quotes-section { padding: 15px 10px; }
             .quote-content { font-size: 14px; }
         }
@@ -469,14 +337,31 @@
 </head>
 <body>
 
+    <div id="authOverlay">
+        <div class="auth-card">
+            <div class="auth-title">Fix My Mood</div>
+            <p style="font-size: 14px; color: var(--text-muted); margin-top: -15px;">Login to sync your habits anywhere.</p>
+            <div class="auth-error" id="authError"></div>
+            <input type="email" id="emailInput" class="auth-input" placeholder="Email Address">
+            <input type="password" id="passwordInput" class="auth-input" placeholder="Password">
+            <div class="auth-btn-group">
+                <button class="auth-btn btn-login" onclick="handleLogin()">Login</button>
+                <button class="auth-btn btn-signup" onclick="handleSignup()">Sign Up</button>
+            </div>
+        </div>
+    </div>
+
     <div class="app-container">
         
-        <!-- Theme Toggle -->
-        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
-            <i class="ph-bold ph-moon" id="themeIcon"></i>
-        </button>
+        <div class="top-controls">
+            <button class="icon-btn" onclick="toggleTheme()" title="Toggle Dark Mode">
+                <i class="ph-bold ph-moon" id="themeIcon"></i>
+            </button>
+            <button class="icon-btn" onclick="handleLogout()" title="Logout" style="color: var(--zone-red);">
+                <i class="ph-bold ph-sign-out"></i>
+            </button>
+        </div>
 
-        <!-- Profile Section (Centered) -->
         <div class="header-profile">
             <div class="user-info">
                 <div class="avatar-container" onclick="document.getElementById('avatarUpload').click()" title="Change Profile Picture">
@@ -486,18 +371,14 @@
                 </div>
                 <div class="greeting-container">
                     <div class="greeting" id="greetingText">Good morning,</div>
-                    <input type="text" id="userNameInput" class="name-input" value="User" onblur="saveName()" placeholder="Enter your name">
+                    <input type="text" id="userNameInput" class="name-input" value="Viraj Patel" onblur="saveName()" placeholder="Enter your name">
                 </div>
             </div>
         </div>
 
-        <!-- Chart Section -->
         <div class="chart-section">
             <div class="chart-header">
-                <div class="chart-title">
-                    <i class="ph ph-chart-line-up"></i>
-                    Daily Progress
-                </div>
+                <div class="chart-title"><i class="ph ph-chart-line-up"></i> Daily Progress</div>
                 <div class="chart-controls">
                     <div class="legend">
                         <div class="legend-item"><div class="legend-dot" style="background: var(--zone-green)"></div> 80 - 100%</div>
@@ -515,22 +396,17 @@
             </div>
         </div>
 
-        <!-- Stats Grid -->
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-icon-wrapper" style="background: var(--primary-light); color: var(--primary);">
-                    <i class="ph-fill ph-check-circle"></i>
-                </div>
+                <div class="stat-icon-wrapper" style="background: var(--primary-light); color: var(--primary);"><i class="ph-fill ph-check-circle"></i></div>
                 <div class="stat-content">
                     <div class="stat-label">This Month</div>
                     <div class="stat-value" id="statAvg">0%</div>
-                    <div class="stat-subtext">Avg. Completion <br><span class="trend-up">↑ 12% vs last month</span></div>
+                    <div class="stat-subtext">Avg. Completion</div>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon-wrapper" style="background: rgba(34, 197, 94, 0.15); color: var(--zone-green);">
-                    <i class="ph-fill ph-fire"></i>
-                </div>
+                <div class="stat-icon-wrapper" style="background: rgba(34, 197, 94, 0.15); color: var(--zone-green);"><i class="ph-fill ph-fire"></i></div>
                 <div class="stat-content">
                     <div class="stat-label">Longest Streak</div>
                     <div class="stat-value" id="statStreak">0</div>
@@ -538,9 +414,7 @@
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon-wrapper" style="background: rgba(2, 132, 199, 0.15); color: #0284c7;">
-                    <i class="ph-fill ph-target"></i>
-                </div>
+                <div class="stat-icon-wrapper" style="background: rgba(2, 132, 199, 0.15); color: #0284c7;"><i class="ph-fill ph-target"></i></div>
                 <div class="stat-content">
                     <div class="stat-label">Total Completed</div>
                     <div class="stat-value" id="statTotal">0</div>
@@ -548,9 +422,7 @@
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon-wrapper" style="background: rgba(234, 179, 8, 0.15); color: var(--zone-yellow);">
-                    <i class="ph-fill ph-star"></i>
-                </div>
+                <div class="stat-icon-wrapper" style="background: rgba(234, 179, 8, 0.15); color: var(--zone-yellow);"><i class="ph-fill ph-star"></i></div>
                 <div class="stat-content">
                     <div class="stat-label">Best Habit</div>
                     <div class="stat-value" id="statBest" style="font-size: 18px; line-height: 1.2;">-</div>
@@ -559,50 +431,34 @@
             </div>
         </div>
 
-        <!-- Add Habit Bar -->
         <div class="add-habit-bar">
-            <div class="add-label">
-                <i class="ph ph-plus"></i> Add New Habit
-            </div>
-            
+            <div class="add-label"><i class="ph ph-plus"></i> Add New Habit</div>
             <div class="add-input-wrapper">
                 <div class="picker-btn" id="emojiBtn" onclick="toggleEmojiPicker()">
                     🏃
                     <div class="emoji-dropdown" id="emojiDropdown"></div>
                 </div>
-                
                 <div class="picker-btn" title="Pick Color">
                     <span class="color-dot" id="colorDotPreview" style="background: #22c55e;"></span>
                     <input type="color" class="color-input-hidden" id="colorPicker" value="#22c55e" onchange="updateColorPreview()">
                 </div>
-
                 <input type="text" id="habitInput" placeholder="Type a habit (e.g. Read 30 mins)..." onkeypress="if(event.key === 'Enter') addHabit()">
             </div>
-            
             <button class="btn-primary" onclick="addHabit()">Add Habit</button>
         </div>
 
-        <!-- Table Container -->
         <div class="table-container">
             <table>
-                <thead>
-                    <tr id="tableHeader">
-                        <!-- Filled by JS -->
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                    <!-- Filled by JS -->
-                </tbody>
+                <thead><tr id="tableHeader"></tr></thead>
+                <tbody id="tableBody"></tbody>
             </table>
         </div>
 
-        <!-- Footer Summary -->
         <div class="footer-summary">
             <div class="footer-section">
                 <div class="footer-title">This Week Summary</div>
                 <div class="footer-date" id="footerDateRange">May 7 - May 13</div>
             </div>
-            
             <div class="footer-section" style="align-items: center; border-left: 1px solid var(--border-light); padding-left: 30px;">
                 <div class="footer-label">Completed</div>
                 <div class="footer-val-block">
@@ -610,13 +466,11 @@
                     <div class="footer-val-text"><span id="footCompleted" style="font-size: 20px;">0</span> <span class="footer-val-sub">habits</span></div>
                 </div>
             </div>
-
             <div class="footer-section" style="align-items: center; border-left: 1px solid var(--border-light); padding-left: 30px;">
                 <div class="footer-label">Success Rate</div>
                 <div class="success-rate-val" id="footRate">0%</div>
                 <div class="success-bar"><div class="success-fill" id="footRateBar"></div></div>
             </div>
-
             <div class="footer-section" style="border-left: 1px solid var(--border-light); padding-left: 30px;">
                 <div class="footer-label">Most Consistent</div>
                 <div class="footer-val-block" style="margin-top: 4px;">
@@ -624,7 +478,6 @@
                     <div class="footer-val-text" style="color: var(--primary); font-size: 14px;" id="footConsistentName">-<br><span class="footer-val-sub" style="color: var(--primary); opacity: 0.8;" id="footConsistentStreak">0 day streak</span></div>
                 </div>
             </div>
-
             <div class="footer-section" style="border-left: 1px solid var(--border-light); padding-left: 30px;">
                 <div class="footer-label">Needs Focus</div>
                 <div class="footer-val-block" style="margin-top: 4px;">
@@ -634,23 +487,16 @@
             </div>
         </div>
 
-        <!-- Interactive Quotes Bottom Section -->
         <div class="quotes-section">
-            <button class="quote-nav-btn" onclick="prevQuote()" title="Previous Quote">
-                <i class="ph-bold ph-caret-left"></i>
-            </button>
+            <button class="quote-nav-btn" onclick="prevQuote()" title="Previous Quote"><i class="ph-bold ph-caret-left"></i></button>
             <div class="quote-card">
                 <div class="quote-content" id="quoteContent">"Loading inspiration..."</div>
                 <div class="quote-author" id="quoteAuthor">- Daily Quote</div>
             </div>
-            <button class="quote-nav-btn" onclick="nextQuote()" title="Next Quote">
-                <i class="ph-bold ph-caret-right"></i>
-            </button>
+            <button class="quote-nav-btn" onclick="nextQuote()" title="Next Quote"><i class="ph-bold ph-caret-right"></i></button>
         </div>
-
     </div>
 
-    <!-- Custom Delete Modal -->
     <div class="modal-overlay" id="deleteModal">
         <div class="modal-box">
             <div class="modal-icon"><i class="ph-bold ph-trash"></i></div>
@@ -664,41 +510,32 @@
     </div>
 
     <script>
-        // --- Theme Management ---
+        // --- Supabase Initialization ---
+        const supabaseUrl = 'https://yryhvecsagzykicgnvds.supabase.co';
+        const supabaseKey = 'sb_publishable_SLavwCzy_oOjUasq8v_SKQ_ZKm8-6wx';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // --- Application State ---
+        let user = null;
+        let currentDate = new Date(); 
+        let habits = [];
+        let completions = {}; // Format: "YYYY-M-D-habitId": true
+        let chartInstance = null;
+        let habitToDelete = null; 
+        
+        // --- Theme & Setup ---
         let isDarkMode = localStorage.getItem('exact_theme_dark') === 'true';
         if (isDarkMode) document.body.classList.add('dark-mode');
+        document.getElementById('themeIcon').className = isDarkMode ? 'ph-bold ph-sun' : 'ph-bold ph-moon';
         
         function toggleTheme() {
             isDarkMode = !isDarkMode;
             document.body.classList.toggle('dark-mode', isDarkMode);
             localStorage.setItem('exact_theme_dark', isDarkMode);
             document.getElementById('themeIcon').className = isDarkMode ? 'ph-bold ph-sun' : 'ph-bold ph-moon';
-            
-            // Re-render chart to update colors based on new theme
             if (chartInstance) renderChart(calculateStats());
         }
-        
-        // Ensure icon is correct on load
-        document.getElementById('themeIcon').className = isDarkMode ? 'ph-bold ph-sun' : 'ph-bold ph-moon';
 
-
-        // Default Exact Data from Image for initialization
-        const initialHabits = [
-            { id: 'h1', name: 'Morning Exercise', emoji: '🏃', color: '#22c55e' },
-            { id: 'h2', name: 'Meditation', emoji: '🧘', color: '#5c59e8' },
-            { id: 'h3', name: 'Read 30 mins', emoji: '📖', color: '#f97316' },
-            { id: 'h4', name: 'Drink water', emoji: '💧', color: '#3b82f6' },
-            { id: 'h5', name: 'Healthy meals', emoji: '🥗', color: '#84cc16' }
-        ];
-
-        // State
-        let currentDate = new Date(); 
-        let habits = JSON.parse(localStorage.getItem('exact_habits')) || initialHabits;
-        let completions = JSON.parse(localStorage.getItem('exact_completions')) || {};
-        let chartInstance = null;
-        let habitToDelete = null; 
-        
-        // Extended Emoji List (34 Emojis)
         const emojiList = [
             '🏃','🧘','📖','💧','🥗','🎯','👥','🌙','📵','🏋️',
             '🚴','💻','💸','📝','🧠','🎨','🍎','🥦','💊','🧹',
@@ -711,25 +548,162 @@
         let quotesList = [];
         let currentQuoteIndex = 0;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            initProfile();
+        document.addEventListener('DOMContentLoaded', async () => {
             initEmojiPicker();
             initQuotes();
-            // Mock data for fresh loads to display visual chart immediately
-            if(Object.keys(completions).length === 0) seedMockData();
-            renderAll();
+            updateGreeting();
+            
+            // Check active session
+            const { data: { session } } = await supabase.auth.getSession();
+            if(session) {
+                user = session.user;
+                document.getElementById('authOverlay').style.display = 'none';
+                await fetchCloudData();
+            }
         });
 
-        // --- Profile Logic ---
-        function initProfile() {
-            const savedName = localStorage.getItem('exact_user_name');
-            if (savedName) document.getElementById('userNameInput').value = savedName;
+        // --- Authentication ---
+        async function handleLogin() {
+            const email = document.getElementById('emailInput').value;
+            const password = document.getElementById('passwordInput').value;
+            const errDiv = document.getElementById('authError');
             
-            const savedPic = localStorage.getItem('exact_profile_pic');
-            if (savedPic) document.getElementById('profileImage').src = savedPic;
-            
-            updateGreeting();
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) { errDiv.textContent = error.message; } 
+            else {
+                user = data.user;
+                document.getElementById('authOverlay').style.display = 'none';
+                await fetchCloudData();
+            }
         }
+
+        async function handleSignup() {
+            const email = document.getElementById('emailInput').value;
+            const password = document.getElementById('passwordInput').value;
+            const errDiv = document.getElementById('authError');
+            
+            const { data, error } = await supabase.auth.signUp({ email, password });
+            if (error) { errDiv.textContent = error.message; } 
+            else {
+                // If email confirmation is off, it logs in automatically
+                user = data.user;
+                document.getElementById('authOverlay').style.display = 'none';
+                
+                // Initialize default profile
+                await supabase.from('profiles').upsert({ id: user.id, full_name: 'Viraj Patel' });
+                await fetchCloudData();
+            }
+        }
+
+        async function handleLogout() {
+            await supabase.auth.signOut();
+            user = null;
+            habits = []; completions = {};
+            document.getElementById('authOverlay').style.display = 'flex';
+            document.getElementById('emailInput').value = '';
+            document.getElementById('passwordInput').value = '';
+        }
+
+        // --- Database Sync (Pull) ---
+        async function fetchCloudData() {
+            if(!user) return;
+
+            // Fetch Profile
+            const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+            if(profile) {
+                document.getElementById('userNameInput').value = profile.full_name || 'Viraj Patel';
+                if(profile.avatar_pic) document.getElementById('profileImage').src = profile.avatar_pic;
+            }
+
+            // Fetch Habits
+            const { data: dbHabits } = await supabase.from('habits').select('*').order('created_at', { ascending: false });
+            habits = dbHabits || [];
+
+            // Fetch Completions for current month
+            const monthPrefix = `${currentDate.getFullYear()}-${currentDate.getMonth()}-`;
+            const { data: dbCompletions } = await supabase.from('completions').select('*').like('date_string', `${monthPrefix}%`);
+            
+            completions = {};
+            if(dbCompletions) {
+                dbCompletions.forEach(c => { completions[`${c.date_string}-${c.habit_id}`] = true; });
+            }
+            
+            renderAll();
+        }
+
+        // --- Database Sync (Push) ---
+        async function saveName() {
+            if(!user) return;
+            const name = document.getElementById('userNameInput').value;
+            await supabase.from('profiles').upsert({ id: user.id, full_name: name });
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file && user) {
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    const dataUrl = e.target.result;
+                    document.getElementById('profileImage').src = dataUrl;
+                    await supabase.from('profiles').upsert({ id: user.id, avatar_pic: dataUrl });
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function addHabit() {
+            if(!user) return;
+            const input = document.getElementById('habitInput');
+            const colorInput = document.getElementById('colorPicker');
+            const name = input.value.trim();
+            if(name) {
+                input.value = '';
+                // Optimistic UI insert
+                const tempId = 'temp-' + Date.now();
+                habits.unshift({ id: tempId, name, emoji: selectedEmoji, color: colorInput.value });
+                renderAll();
+
+                // DB Insert
+                const { data } = await supabase.from('habits').insert([{ user_id: user.id, name, emoji: selectedEmoji, color: colorInput.value }]).select();
+                if(data && data.length > 0) {
+                    // Replace temp ID with real DB UUID
+                    const index = habits.findIndex(h => h.id === tempId);
+                    if(index !== -1) { habits[index] = data[0]; renderAll(); }
+                }
+            }
+        }
+
+        async function toggleCompletion(day, habitId) {
+            if(!user) return;
+            const dateStr = `${currentDate.getFullYear()}-${currentDate.getMonth()}-${day}`;
+            const key = `${dateStr}-${habitId}`;
+            
+            if(completions[key]) {
+                delete completions[key];
+                renderAll(); // Optimistic Update
+                await supabase.from('completions').delete().match({ habit_id: habitId, date_string: dateStr, user_id: user.id });
+            } else {
+                completions[key] = true;
+                renderAll(); // Optimistic Update
+                await supabase.from('completions').insert([{ user_id: user.id, habit_id: habitId, date_string: dateStr }]);
+            }
+        }
+
+        async function confirmDelete() {
+            if(habitToDelete && user) {
+                const idToDelete = habitToDelete;
+                habits = habits.filter(h => h.id !== idToDelete);
+                Object.keys(completions).forEach(key => { if(key.endsWith(`-${idToDelete}`)) delete completions[key]; });
+                renderAll(); // Optimistic Delete
+                
+                await supabase.from('habits').delete().eq('id', idToDelete);
+            }
+            closeDeleteModal();
+        }
+
+        // --- Modals & UI Triggers ---
+        function removeHabit(id) { habitToDelete = id; document.getElementById('deleteModal').classList.add('show'); }
+        function closeDeleteModal() { habitToDelete = null; document.getElementById('deleteModal').classList.remove('show'); }
 
         function updateGreeting() {
             const hour = new Date().getHours();
@@ -740,33 +714,12 @@
             document.getElementById('greetingText').textContent = greeting + ',';
         }
 
-        function saveName() {
-            const name = document.getElementById('userNameInput').value;
-            localStorage.setItem('exact_user_name', name);
-        }
-
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const dataUrl = e.target.result;
-                    document.getElementById('profileImage').src = dataUrl;
-                    localStorage.setItem('exact_profile_pic', dataUrl);
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        // --- Interactive Quotes Logic ---
+        // --- Quotes Logic ---
         async function initQuotes() {
             try {
-                // Check if we have cached quotes list
                 const cachedQuotes = JSON.parse(localStorage.getItem('exact_quotes_repo'));
-                
                 if (cachedQuotes && cachedQuotes.length > 0) {
-                    quotesList = cachedQuotes;
-                    setRandomQuote();
+                    quotesList = cachedQuotes; setRandomQuote();
                 } else {
                     const response = await fetch('https://raw.githubusercontent.com/dwyl/quotes/main/quotes.json');
                     quotesList = await response.json();
@@ -774,7 +727,6 @@
                     setRandomQuote();
                 }
             } catch (error) {
-                console.error("Failed to fetch quotes", error);
                 quotesList = [{ text: "Small daily improvements over time lead to stunning results.", author: "Robin Sharma" }];
                 displayQuote(0);
             }
@@ -793,88 +745,8 @@
             document.getElementById('quoteAuthor').textContent = `- ${q.author || 'Unknown'}`;
         }
 
-        function nextQuote() {
-            if(quotesList.length === 0) return;
-            currentQuoteIndex = (currentQuoteIndex + 1) % quotesList.length;
-            displayQuote(currentQuoteIndex);
-        }
-
-        function prevQuote() {
-            if(quotesList.length === 0) return;
-            currentQuoteIndex = (currentQuoteIndex - 1 + quotesList.length) % quotesList.length;
-            displayQuote(currentQuoteIndex);
-        }
-
-
-        // --- Data Management ---
-        function saveData() {
-            localStorage.setItem('exact_habits', JSON.stringify(habits));
-            localStorage.setItem('exact_completions', JSON.stringify(completions));
-        }
-
-        function getDaysInMonth(date) { return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate(); }
-        
-        function getCompletionKey(day, habitId) {
-            return `${currentDate.getFullYear()}-${currentDate.getMonth()}-${day}-${habitId}`;
-        }
-
-        function seedMockData() {
-            const days = getDaysInMonth(currentDate);
-            habits.forEach(h => {
-                for(let i=1; i<=days; i++) {
-                    if(Math.random() > 0.4) completions[getCompletionKey(i, h.id)] = true;
-                }
-            });
-            saveData();
-        }
-
-        function toggleCompletion(day, habitId) {
-            const key = getCompletionKey(day, habitId);
-            if(completions[key]) delete completions[key];
-            else completions[key] = true;
-            saveData();
-            renderAll();
-        }
-
-        function addHabit() {
-            const input = document.getElementById('habitInput');
-            const colorInput = document.getElementById('colorPicker');
-            const name = input.value.trim();
-            if(name) {
-                habits.unshift({
-                    id: 'h' + Date.now(),
-                    name: name,
-                    emoji: selectedEmoji,
-                    color: colorInput.value
-                });
-                input.value = '';
-                saveData();
-                renderAll();
-            }
-        }
-
-        // --- Modal Delete Logic ---
-        function removeHabit(id) {
-            habitToDelete = id;
-            document.getElementById('deleteModal').classList.add('show');
-        }
-
-        function closeDeleteModal() {
-            habitToDelete = null;
-            document.getElementById('deleteModal').classList.remove('show');
-        }
-
-        function confirmDelete() {
-            if(habitToDelete) {
-                habits = habits.filter(h => h.id !== habitToDelete);
-                Object.keys(completions).forEach(key => { 
-                    if(key.endsWith(`-${habitToDelete}`)) delete completions[key]; 
-                });
-                saveData();
-                renderAll();
-            }
-            closeDeleteModal();
-        }
+        function nextQuote() { if(quotesList.length > 0) { currentQuoteIndex = (currentQuoteIndex + 1) % quotesList.length; displayQuote(currentQuoteIndex); } }
+        function prevQuote() { if(quotesList.length > 0) { currentQuoteIndex = (currentQuoteIndex - 1 + quotesList.length) % quotesList.length; displayQuote(currentQuoteIndex); } }
 
         // --- Pickers ---
         function initEmojiPicker() {
@@ -883,75 +755,65 @@
                 const div = document.createElement('div');
                 div.className = 'emoji-item'; div.textContent = e;
                 div.onclick = (ev) => {
-                    ev.stopPropagation();
-                    selectedEmoji = e;
+                    ev.stopPropagation(); selectedEmoji = e;
                     document.getElementById('emojiBtn').childNodes[0].nodeValue = e + ' ';
                     toggleEmojiPicker();
                 };
                 dropdown.appendChild(div);
             });
         }
-        
         function toggleEmojiPicker() { document.getElementById('emojiDropdown').classList.toggle('show'); }
         function updateColorPreview() { document.getElementById('colorDotPreview').style.background = document.getElementById('colorPicker').value; }
-        document.addEventListener('click', e => {
-            if(!e.target.closest('#emojiBtn')) document.getElementById('emojiDropdown').classList.remove('show');
-        });
+        document.addEventListener('click', e => { if(!e.target.closest('#emojiBtn')) document.getElementById('emojiDropdown').classList.remove('show'); });
 
-        // --- UI Rendering ---
+        // --- Core Rendering ---
+        function getDaysInMonth(date) { return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate(); }
+        
         function toggleChart() {
             const cont = document.getElementById('chartContainer');
             const icon = document.getElementById('toggleIcon');
             const text = document.getElementById('toggleText');
             if(cont.style.display === 'none') {
-                cont.style.display = 'block';
-                icon.className = 'ph ph-eye-slash'; text.textContent = 'Hide Chart';
+                cont.style.display = 'block'; icon.className = 'ph ph-eye-slash'; text.textContent = 'Hide Chart';
             } else {
-                cont.style.display = 'none';
-                icon.className = 'ph ph-eye'; text.textContent = 'Show Chart';
+                cont.style.display = 'none'; icon.className = 'ph ph-eye'; text.textContent = 'Show Chart';
             }
         }
 
         function calculateStats() {
             const daysInMonth = getDaysInMonth(currentDate);
-            let totalCompletions = 0;
-            let dailyPercentages = [];
+            let totalCompletions = 0; let dailyPercentages = [];
             
             for (let day = 1; day <= daysInMonth; day++) {
                 let dayCompleted = 0;
-                habits.forEach(h => { if (completions[getCompletionKey(day, h.id)]) dayCompleted++; });
+                habits.forEach(h => { if (completions[`${currentDate.getFullYear()}-${currentDate.getMonth()}-${day}-${h.id}`]) dayCompleted++; });
                 totalCompletions += dayCompleted;
                 dailyPercentages.push(habits.length ? Math.round((dayCompleted / habits.length) * 100) : 0);
             }
 
             let avgCompletion = (habits.length * daysInMonth) ? Math.round((totalCompletions / (habits.length * daysInMonth)) * 100) : 0;
-
             let bestHabit = null; let bestStreak = -1;
             let worstHabit = null; let worstStreak = 999;
-            let longestOverall = 0;
-            let habitStats = {};
+            let longestOverall = 0; let habitStats = {};
 
             habits.forEach(h => {
                 let currStreak = 0, maxStreak = 0;
                 for (let day = 1; day <= daysInMonth; day++) {
-                    if (completions[getCompletionKey(day, h.id)]) {
-                        currStreak++;
-                        if(currStreak > maxStreak) maxStreak = currStreak;
+                    if (completions[`${currentDate.getFullYear()}-${currentDate.getMonth()}-${day}-${h.id}`]) {
+                        currStreak++; if(currStreak > maxStreak) maxStreak = currStreak;
                     } else currStreak = 0;
                 }
                 
                 let activeStreak = 0;
                 let endDay = (currentDate.getMonth() === new Date().getMonth()) ? new Date().getDate() : daysInMonth;
                 for (let day = endDay; day >= 1; day--) {
-                    if (completions[getCompletionKey(day, h.id)]) activeStreak++;
+                    if (completions[`${currentDate.getFullYear()}-${currentDate.getMonth()}-${day}-${h.id}`]) activeStreak++;
                     else break;
                 }
 
                 if(maxStreak > longestOverall) longestOverall = maxStreak;
-                
                 if(activeStreak > bestStreak) { bestStreak = activeStreak; bestHabit = h; }
                 if(activeStreak < worstStreak) { worstStreak = activeStreak; worstHabit = h; }
-
                 habitStats[h.id] = { max: maxStreak, active: activeStreak };
             });
 
@@ -962,21 +824,17 @@
             const daysInMonth = getDaysInMonth(currentDate);
             const labels = Array.from({length: daysInMonth}, (_, i) => `Day ${i+1}`);
             const ctx = document.getElementById('progressChart').getContext('2d');
-
             if (chartInstance) chartInstance.destroy();
 
             const getColor = (val) => {
-                if(val >= 80) return '#22c55e';
-                if(val >= 50) return '#eab308';
-                if(val >= 30) return '#f97316';
-                return '#ef4444';
+                if(val >= 80) return '#22c55e'; if(val >= 50) return '#eab308';
+                if(val >= 30) return '#f97316'; return '#ef4444';
             };
 
             const gradientFill = ctx.createLinearGradient(0, 0, 0, 250);
             gradientFill.addColorStop(0, isDarkMode ? 'rgba(34, 197, 94, 0.15)' : 'rgba(34, 197, 94, 0.25)'); 
             gradientFill.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
-            // Extract dynamic colors based on theme
             const gridColor = isDarkMode ? '#334155' : '#f1f5f9';
             const tickColor = isDarkMode ? '#94a3b8' : '#94a3b8';
 
@@ -985,34 +843,17 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        data: stats.dailyPercentages,
-                        fill: true,
-                        backgroundColor: gradientFill,
-                        borderWidth: 2,
-                        tension: 0.4, 
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
-                        pointBorderColor: isDarkMode ? '#1e293b' : '#fff',
-                        pointBorderWidth: 2,
-                        pointBackgroundColor: ctx => getColor(ctx.raw),
-                        segment: {
-                            borderColor: ctx => getColor(ctx.p1.parsed.y)
-                        }
+                        data: stats.dailyPercentages, fill: true, backgroundColor: gradientFill, borderWidth: 2, tension: 0.4, 
+                        pointRadius: 4, pointHoverRadius: 6, pointBorderColor: isDarkMode ? '#1e293b' : '#fff', pointBorderWidth: 2,
+                        pointBackgroundColor: ctx => getColor(ctx.raw), segment: { borderColor: ctx => getColor(ctx.p1.parsed.y) }
                     }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: false }, tooltip: { enabled: true } },
                     scales: {
-                        y: {
-                            beginAtZero: true, max: 100,
-                            ticks: { callback: v => v+'%', stepSize: 20, color: tickColor, font:{size: 11} },
-                            grid: { borderDash: [4, 4], color: gridColor, drawBorder: false }
-                        },
-                        x: {
-                            ticks: { color: tickColor, font:{size: 11}, maxTicksLimit: window.innerWidth < 600 ? 7 : 15 },
-                            grid: { display: false, drawBorder: false }
-                        }
+                        y: { beginAtZero: true, max: 100, ticks: { callback: v => v+'%', stepSize: 20, color: tickColor, font:{size: 11} }, grid: { borderDash: [4, 4], color: gridColor, drawBorder: false } },
+                        x: { ticks: { color: tickColor, font:{size: 11}, maxTicksLimit: window.innerWidth < 600 ? 7 : 15 }, grid: { display: false, drawBorder: false } }
                     }
                 }
             });
@@ -1027,8 +868,7 @@
                 document.getElementById('statBest').textContent = stats.bestHabit.name;
                 document.getElementById('statBestStreak').textContent = `${stats.bestStreak} day streak`;
             } else {
-                document.getElementById('statBest').textContent = '-';
-                document.getElementById('statBestStreak').textContent = `0 day streak`;
+                document.getElementById('statBest').textContent = '-'; document.getElementById('statBestStreak').textContent = `0 day streak`;
             }
 
             let today = new Date();
@@ -1086,9 +926,7 @@
                         <div class="habit-icon" style="background-color: ${h.color};">${h.emoji}</div>
                         <div class="habit-info">
                             <span class="habit-title">${h.name}</span>
-                            <span class="habit-streak" style="color: ${h.color}">
-                                <i class="ph-fill ph-fire" style="font-size:12px"></i> ${activeStreak}
-                            </span>
+                            <span class="habit-streak" style="color: ${h.color}"><i class="ph-fill ph-fire" style="font-size:12px"></i> ${activeStreak}</span>
                         </div>
                     </div>
                 `;
@@ -1096,7 +934,7 @@
 
                 for(let d=1; d<=daysInMonth; d++) {
                     let td = document.createElement('td');
-                    let checked = completions[getCompletionKey(d, h.id)];
+                    let checked = completions[`${currentDate.getFullYear()}-${currentDate.getMonth()}-${d}-${h.id}`];
                     
                     let box = document.createElement('div');
                     box.className = `check-box ${checked ? 'checked' : ''}`;
@@ -1104,8 +942,7 @@
                     box.innerHTML = checked ? '<i class="ph-bold ph-check"></i>' : '';
                     box.onclick = () => toggleCompletion(d, h.id);
                     
-                    td.appendChild(box);
-                    tr.appendChild(td);
+                    td.appendChild(box); tr.appendChild(td);
                 }
                 tbody.appendChild(tr);
             });
@@ -1118,9 +955,7 @@
             renderTable(stats);
         }
 
-        window.addEventListener('resize', () => {
-            renderChart(calculateStats());
-        });
+        window.addEventListener('resize', () => { renderChart(calculateStats()); });
     </script>
 </body>
 </html>
